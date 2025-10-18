@@ -14,7 +14,7 @@ export const reasons = [
     { 
         icon: Star, 
         title: "Keberhasilan", 
-        description: "Feedback menjadi tolok ukur kemajuan layanan kami." 
+        description: "Feedback menjadi tolak ukur kemajuan layanan kami." 
     },
     { 
         icon: MessageSquare, 

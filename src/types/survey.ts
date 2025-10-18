@@ -24,3 +24,7 @@ export interface SurveyResponse {
   
     answers: AnswerDetail[];
 }
+
+export interface QuestionFieldProps {
+    question: Question;
+}

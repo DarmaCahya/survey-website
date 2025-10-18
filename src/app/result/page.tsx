@@ -35,7 +35,7 @@ export default function Result() {
                 <div className="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-6">
                     <p className="text-2xl text-black font-medium text-center pb-4">Daftar jawaban dari user</p>
                     <ScrollArea className="h-[25rem]">
-                        <div className="p-6">
+                        <div>
                             <Accordion type="single" collapsible className="w-full space-y-2">
                                 {mockResponses.map((response, index) => (
                                     <AccordionItem
@@ -72,6 +72,9 @@ export default function Result() {
                             </Accordion>
                         </div>
                     </ScrollArea>
+                    <p className="mt-4">
+                        Total Responden: {mockResponses.length} user
+                    </p>
                 </div>
             </div>
 

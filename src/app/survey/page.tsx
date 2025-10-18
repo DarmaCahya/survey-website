@@ -5,11 +5,25 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { questions } from '@/data/question';
+import QuestionFields from '@/components/Survey/questionFields';
+import { toast } from 'sonner';
 
 export default function Survey() {
-    const handleSubmit = () => {
-        console.log("Form submitted");
-    }
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+    
+        const simulateSubmit = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve('ok');
+            }, 1500);
+        });
+    
+        toast.promise(simulateSubmit, {
+            loading: 'Mengirim kuesioner...',
+            success: 'Kuesioner berhasil dikirim 🎉',
+            error: 'Terjadi kesalahan, silakan coba lagi.',
+        });
+    };
 
     return (
         <div className="min-h-screen py-12 px-4 bg-[#fbfbfc]">
@@ -33,102 +47,16 @@ export default function Survey() {
                     <p className="text-lg text-gray-400">Silakan jawab semua pertanyaan berikut dengan lengkap</p>
                 </div>
 
-                <form onClick={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {questions.map((question) => (
-                        <div key={question.id} className="flex flex-col gap-4 bg-white p-8 rounded-lg border border-black/10">
-                            <label className="text-xl font-normal text-gray-800">
-                                {question.text}
-                                {question.required && <span className="text-red-500"> *</span>}
-                            </label>
-
-                            {question.type === "short" && (
-                                <input 
-                                    type="text"
-                                    className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full transition-colors duration-200 text-gray-800 placeholder-gray-400"
-                                    placeholder={question.placeholder}
-                                    required={question.required}
-                                />
-                            )}
-                            {question.type === "long" && (
-                                <textarea 
-                                className="max-w-lg border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full transition-colors duration-200 text-gray-800 placeholder-gray-400"
-                                placeholder={question.placeholder}
-                                rows={1}
-                                required={question.required}
-                                ></textarea>
-                            )}  
-                            {question.type === "email" &&(
-                                <input 
-                                    type="email"
-                                    className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full transition-colors duration-200 text-gray-800 placeholder-gray-400"
-                                    placeholder={question.placeholder}
-                                    required={question.required}
-                                />
-                            )}
-                            {question.type === "number" &&(
-                                <input 
-                                    type="number"
-                                    className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full transition-colors duration-200 text-gray-800 placeholder-gray-400"
-                                    placeholder={question.placeholder}
-                                    required={question.required}
-                                />
-                            )}
-                            {question.type === "dropdown" && question.options && (
-                                <select 
-                                    defaultValue=""
-                                    className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full transition-colors duration-200 text-gray-800"
-                                    required={question.required}
-                                >
-                                    <option value="" disabled>
-                                        {question.placeholder || "Pilih salah satu"}
-                                    </option>
-                                    {question.options.map((option, index) => (
-                                        <option key={index} value={option}>
-                                            {option}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-                            {question.type === "radio" && question.options && (
-                                <div className="flex flex-col gap-2">
-                                    {question.options.map((option, index) => (
-                                        <label key={index} className="flex items-center gap-2">
-                                            <input 
-                                                type="radio"
-                                                name={question.id}
-                                                value={option}
-                                                className="form-radio"
-                                                required={question.required}
-                                            />
-                                            {option}
-                                        </label>
-                                    ))}
-                                </div>
-                            )}
-                            {question.type === "checkbox" && question.options && (
-                                <div className="flex flex-col gap-2">
-                                    {question.options.map((option, index) => (
-                                        <label key={index} className="flex items-center gap-2">
-                                            <input 
-                                                type="checkbox"
-                                                name={question.id}
-                                                value={option}
-                                                className="form-checkbox"
-                                                required={question.required}
-                                            />
-                                            {option}
-                                        </label>    
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <QuestionFields key={question.id} question={question} />
                     ))}
                     <div className='flex justify-center mt-8'>
                         <Button 
                             variant="secondary"   
                             size="lg"        
                             type='submit'     
-                            className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-lg p-6 text-white"
+                            className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-6 text-white"
                         >
                             <Send className="h-6 w-6" />
                             Kirim Kuesioner
