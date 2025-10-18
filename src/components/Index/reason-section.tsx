@@ -6,7 +6,7 @@ import { Send } from "lucide-react";
 export default function ReasonSection() {
     return (
         <section id="reasons">
-            <div className="max-w-5xl flex flex-col text-center items-center justify-center gap-6 xl:py-16 px-6">
+            <div className="flex flex-col text-center items-center justify-center gap-6 xl:py-16 px-6">
                 <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="font-bold text-xl md:text-2xl lg:text-3xl xl:text-4xl text-black leading-tight">
                         Mengapa Partisipasi Anda Penting?
