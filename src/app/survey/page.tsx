@@ -9,20 +9,33 @@ import QuestionFields from '@/components/Survey/questionFields';
 import { toast } from 'sonner';
 
 export default function Survey() {
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-    
-        const simulateSubmit = new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve('ok');
-            }, 1500);
-        });
-    
-        toast.promise(simulateSubmit, {
-            loading: 'Mengirim kuesioner...',
-            success: 'Kuesioner berhasil dikirim 🎉',
-            error: 'Terjadi kesalahan, silakan coba lagi.',
-        });
+      
+        const formData = new FormData(e.currentTarget);
+        const entries = Object.fromEntries(formData.entries());
+      
+        try {
+            const promise = fetch("/api/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(entries),
+            }).then((res) => {
+                if (!res.ok) throw new Error("Gagal kirim");
+                return res.json();
+            });
+        
+            toast.promise(promise, {
+                loading: "Mengirim kuesioner...",
+                success: "Kuesioner berhasil dikirim 🎉",
+                error: "Terjadi kesalahan, silakan coba lagi.",
+            });
+        
+            await promise;
+            e.currentTarget.reset();
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (
@@ -42,7 +55,7 @@ export default function Survey() {
 
                 <div className='flex flex-col items-center text-center gap-4 mb-10'>
                     <h1 className="font-bold text-4xl bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                        Kuesioner Risiko Keamanan Data UMKM
+                        Kuesioner Keamanan Data UMKM
                     </h1>
                     <p className="text-base text-gray-500 text-justify">
                         Kuesioner ini bertujuan untuk memetakan tingkat kesadaran dan kesiapan pelaku UMKM dalam melindungi data bisnis dari berbagai ancaman siber.

@@ -1,23 +1,24 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import { mockResponses } from "@/data/responses";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Chart from "@/components/Result/chart";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 
 export default function Result() {
     const [authorized, setAuthorized] = useState(false);
     const [password, setPassword] = useState(""); 
     const [loading, setLoading] = useState(false);
-  
+    const [responses, setResponses] = useState<any[]>([]);
+    const [loadingData, setLoadingData] = useState(true);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -36,6 +37,29 @@ export default function Result() {
         }, 500);
     };    
 
+    useEffect(() => {
+        if (!authorized) return;
+
+        const fetchResponses = async () => {
+            try {
+                const res = await fetch("/api/responses");
+                const data = await res.json();
+                if (data.success) {
+                    setResponses(data.data);
+                } else {
+                    toast.error("Gagal memuat data responden");
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error("Terjadi kesalahan saat mengambil data");
+            } finally {
+                setLoadingData(false);
+            }
+        };
+
+        fetchResponses();
+    }, [authorized]);
+
     if (!authorized) {
         return (
             <motion.div
@@ -53,21 +77,21 @@ export default function Result() {
             
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <Input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Masukkan password"
-                        disabled={loading}
-                        className="w-full border-b-2 border-gray-300 focus:border-purple-500 p-2 text-gray-800"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Masukkan password"
+                            disabled={loading}
+                            className="w-full border-b-2 border-gray-300 focus:border-purple-500 p-2 text-gray-800"
                         />
             
                         <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
-                        disabled={loading || password.length === 0}
+                            type="submit"
+                            size="lg"
+                            className="w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
+                            disabled={loading || password.length === 0}
                         >
-                        Lanjutkan
+                            Lanjutkan
                         </Button>
                     </form>
             
@@ -104,33 +128,35 @@ export default function Result() {
                     <div className="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-6">
                         <p className="text-2xl text-black font-medium text-center pb-4">Daftar jawaban dari user</p>
                         <ScrollArea className="h-[25rem]">
-                            <div>
+                            {loadingData ? (
+                                <p className="text-center text-gray-500 py-10">Memuat data responden...</p>
+                            ) : responses.length === 0 ? (
+                                <p className="text-center text-gray-500 py-10">Belum ada responden 😢</p>
+                            ) : (
                                 <Accordion type="single" collapsible className="w-full space-y-2">
-                                    {mockResponses.map((response, index) => (
+                                    {responses.map((response, index) => (
                                         <AccordionItem
                                             key={index}
                                             value={`response-${index}`}
                                             className="border border-gray-200 rounded-lg shadow-sm bg-gray-50"
                                         >
                                             <AccordionTrigger className="px-4 py-3 text-left text-lg font-semibold text-gray-800 hover:bg-purple-50 rounded-lg transition">
-                                                {response.respondent.name}
+                                                {response.name}
                                             </AccordionTrigger>
                                             <AccordionContent className="px-4 py-4 space-y-3 bg-white rounded-b-lg">
                                                 <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Email:</span> {response.respondent.email}
+                                                    <span className="font-medium">Email:</span> {response.email}
                                                 </p>
                                                 <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Dikirim pada:</span> {new Date(response.respondent.submittedAt).toLocaleString()}
+                                                    <span className="font-medium">Dikirim pada:</span> {new Date(response.createdAt).toLocaleString()}
                                                 </p>
 
                                                 <div className="pt-3 border-t border-gray-200 space-y-2">
-                                                    {response.answers.map((ans, i) => (
-                                                        <div key={i} className="p-3 rounded-md bg-gray-100">
-                                                            <p className="text-sm font-medium text-gray-800">
-                                                                {ans.questionId}
-                                                            </p>
+                                                    {Object.entries(response.answers || {}).map(([key, value]: [string, any]) => (
+                                                        <div key={key} className="p-3 rounded-md bg-gray-100">
+                                                            <p className="text-sm font-medium text-gray-800">{key}</p>
                                                             <p className="text-sm text-gray-700">
-                                                                {Array.isArray(ans.value) ? ans.value.join(", ") : ans.value}
+                                                                {Array.isArray(value) ? value.join(", ") : value.toString()}
                                                             </p>
                                                         </div>
                                                     ))}
@@ -139,15 +165,16 @@ export default function Result() {
                                         </AccordionItem>
                                     ))}
                                 </Accordion>
-                            </div>
+                            )}
                         </ScrollArea>
-                        <p className="mt-4">
-                            Total Responden: {mockResponses.length} user
+
+                        <p className="mt-4 text-center">
+                            Total Responden: {responses.length} user
                         </p>
                     </div>
                 </div>
 
-                <Chart />
+                {/* <Chart /> */}
             </div>
         </div>
     );

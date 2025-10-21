@@ -50,7 +50,7 @@ export const questions: Question[] = [
         text: "Apakah Anda memahami deskripsi dari jenis data tersebut?",
         placeholder: "",
         type: "radio",
-        options: ["Tidak Mengerti", "Mengerti"],
+        options: ["Mengerti", "Tidak Mengerti"],
         required: true,
     },
     {
@@ -106,13 +106,13 @@ export const questions: Question[] = [
           "Data Pemasok",
           "Lainnya",
         ],
-        required: true,
+        required: false,
     },
     {
         "id": "penjelasan_tidak_dipahami",
         "text": "Penjelasan tentang hal yang tidak dimengerti",
         "placeholder": "Misal: saya tidak paham apa itu data pelanggan",
         "type": "long",
-        "required": true
+        "required": false,
     }
 ];
