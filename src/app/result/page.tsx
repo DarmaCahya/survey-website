@@ -9,14 +9,15 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import Chart from "@/components/Result/chart";
+// import Chart from "@/components/Result/chart";
 import { Input } from "@/components/ui/input";
+import { AnswerData, responsesData } from "@/types/survey";
 
 export default function Result() {
     const [authorized, setAuthorized] = useState(false);
     const [password, setPassword] = useState(""); 
     const [loading, setLoading] = useState(false);
-    const [responses, setResponses] = useState<any[]>([]);
+    const [responses, setResponses] = useState<responsesData[]>([]);
     const [loadingData, setLoadingData] = useState(true);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -152,7 +153,7 @@ export default function Result() {
                                                 </p>
 
                                                 <div className="pt-3 border-t border-gray-200 space-y-2">
-                                                    {Object.entries(response.answers || {}).map(([key, value]: [string, any]) => (
+                                                    {Object.entries(response.answers || {}).map(([key, value]: [string, AnswerData]) => (
                                                         <div key={key} className="p-3 rounded-md bg-gray-100">
                                                             <p className="text-sm font-medium text-gray-800">{key}</p>
                                                             <p className="text-sm text-gray-700">

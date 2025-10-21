@@ -28,3 +28,26 @@ export interface SurveyResponse {
 export interface QuestionFieldProps {
     question: Question;
 }
+
+export interface AnswerData {
+    name: string;
+    email: string;
+    business_name: string;
+    sector: string;
+    data_type: string;
+    understand_data_type: "Mengerti" | "Tidak Mengerti";
+    biaya_pengetahuan: number;
+    pengaruh_kerugian: number;
+    frekuensi_serangan: number;
+    pemulihan: number;
+    pemahaman_poin: "Mengerti" | "Tidak Mengerti";
+    pemahaman_tidak_mengerti?: string; 
+    penjelasan_tidak_dipahami?: string; 
+}  
+
+export type responsesData = {
+    name: string;
+    email: string;
+    answers: AnswerData;
+    createdAt: string;
+}
