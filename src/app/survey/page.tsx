@@ -40,11 +40,16 @@ export default function Survey() {
                     </Link> 
                 </Button>
 
-                <div className='flex flex-col items-center text-center gap-4 mb-12'>
-                    <h1 className="font-bold text-5xl bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                        Kuesioner Kepuasan
+                <div className='flex flex-col items-center text-center gap-4 mb-10'>
+                    <h1 className="font-bold text-4xl bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                        Kuesioner Risiko Keamanan Data UMKM
                     </h1>
-                    <p className="text-lg text-gray-400">Silakan jawab semua pertanyaan berikut dengan lengkap</p>
+                    <p className="text-base text-gray-500 text-justify">
+                        Kuesioner ini bertujuan untuk memetakan tingkat kesadaran dan kesiapan pelaku UMKM dalam melindungi data bisnis dari berbagai ancaman siber.
+                        Melalui isian ini, kami ingin memahami seberapa besar pengetahuan, dampak, frekuensi, dan kemampuan pemulihan yang dimiliki setiap usaha dalam menghadapi risiko seperti phishing, penipuan pembayaran, dan kebocoran data.
+
+                        Hasil dari kuesioner ini akan digunakan untuk analisis risiko dan penyusunan rekomendasi peningkatan keamanan data bagi UMKM di Indonesia.
+                    </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

@@ -11,7 +11,9 @@ export default function ReasonSection() {
                     <h2 className="font-bold text-xl md:text-2xl lg:text-3xl xl:text-4xl text-black leading-tight">
                         Mengapa Partisipasi Anda Penting?
                     </h2>
-                    <p className="text-sm md:text-lg lg:text-xl xl:text-lg text-gray-400">Feedback anda adalah kunci untuk menciptakan pengalaman yang baik</p>
+                    <p className="text-sm md:text-lg lg:text-xl xl:text-lg text-gray-400">
+                        Kesadaran terhadap keamanan data bukan hanya tanggung jawab perusahaan besar — UMKM juga berisiko menjadi target serangan siber.
+                    </p>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 w-full xl:px-40">
                     {reasons.map((item, index) => {
@@ -29,7 +31,7 @@ export default function ReasonSection() {
                     })}
                 </div>
 
-                <div className="flex flex-col items-center justify-center gap-4 lg:gap-6 py-4 md:py-6 lg:py-20">
+                <div className="flex flex-col items-center justify-center gap-4 lg:gap-6 pt-4 md:pt-6 lg:pt-20">
                     <div>
                         <h2 className="font-bold text-xl md:text-2xl lg:text-3xl xl:text-4xl text-black leading-tight">
                             Siap Berbagi Pengalaman Anda?

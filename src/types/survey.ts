@@ -1,4 +1,4 @@
-type QuestionType = "short" | "long" | "radio" | "checkbox" | "email" | "dropdown" | "number";
+type QuestionType = "short" | "long" | "radio" | "checkbox" | "email" | "dropdown" | "number" | "slider";
 
 export interface Question {
     id: string;

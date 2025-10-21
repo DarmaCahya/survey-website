@@ -1,24 +1,24 @@
-import { Users, Heart, Star, MessageSquare } from "lucide-react";
+import { Settings, BriefcaseBusiness, Brain, Puzzle } from "lucide-react"
 
 export const reasons = [
     { 
-        icon: Users, 
-        title: "Kualitas Layanan", 
-        description: "Masukan Anda membantu kami memahami kebutuhan pengguna." 
+        icon: Puzzle, 
+        title: "Perlindungan Data", 
+        description: "Mengetahui seberapa aman data pelanggan dan transaksi Anda." 
     },
     { 
-        icon: Heart, 
-        title: "Kepuasan Pengguna", 
-        description: "Kami ingin memastikan pengalaman Anda menyenangkan." 
+        icon: Brain, 
+        title: "Kesadaran Keamanan", 
+        description: "Mengukur sejauh mana Anda memahami ancaman digital." 
     },
     { 
-        icon: Star, 
-        title: "Keberhasilan", 
-        description: "Feedback menjadi tolak ukur kemajuan layanan kami." 
+        icon: BriefcaseBusiness, 
+        title: "Kesiapan Bisnis", 
+        description: "Evaluasi kemampuan bisnis Anda menghadapi serangan siber." 
     },
     { 
-        icon: MessageSquare, 
-        title: "Suara Anda", 
-        description: "Kami menghargai setiap saran untuk perubahan positif." 
+        icon: Settings, 
+        title: "Langkah Pencegahan", 
+        description: "Dapatkan wawasan untuk memperkuat sistem keamanan Anda." 
     },
 ];
