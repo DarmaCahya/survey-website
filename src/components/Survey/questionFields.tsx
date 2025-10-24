@@ -3,10 +3,16 @@ import { QuestionFieldProps } from "@/types/survey";
 export default function QuestionFields({question}: QuestionFieldProps) {
     return (
         <div className="flex flex-col gap-4 bg-white p-8 rounded-lg border border-black/10">
-            <label className="text-xl font-normal text-gray-800">
-                {question.text}
-                {question.required && <span className="text-red-500"> *</span>}
-            </label>
+            <div>
+                <label className="text-xl font-normal text-gray-800">
+                    {question.text}
+                    {question.required && <span className="text-red-500"> *</span>}
+                </label>
+
+                {question.description && (
+                    <p className="text-sm text-gray-500">{question.description}</p>
+                )}
+            </div>
     
             {question.type === "short" && (
                 <input

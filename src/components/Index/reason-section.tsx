@@ -46,7 +46,7 @@ export default function ReasonSection() {
                         size="lg"             
                         className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-80 transition-all duration-300 text-base md:text-xl p-6 text-white"
                     >
-                        <Link href="/survey">
+                        <Link href="/form">
                             <Send className="h-6 w-6 mr-2" />
                             Mulai Sekarang
                         </Link>

@@ -7,6 +7,7 @@ export interface Question {
     placeholder: string;
     required: boolean;
     options?: string[];
+    description?: string;
 }
 
 export interface AnswerDetail {

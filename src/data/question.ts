@@ -1,61 +1,11 @@
 import { Question } from "@/types/survey";
 
 export const questions: Question[] = [
-    { 
-        id: "name", 
-        text: "Nama lengkap Anda?", 
-        placeholder: "Masukkan nama lengkap Anda", 
-        type: "short", 
-        required: true, 
-    },
-    {
-        id: "business_name",
-        text: "Apa nama usaha atau organisasi Anda?",
-        placeholder: "Masukkan nama usaha Anda",
-        type: "short",
-        required: true,
-    },
-    {
-        id: "sector",
-        text: "Bidang usaha Anda bergerak di sektor apa?",
-        placeholder: "Contoh: kuliner, jasa, ritel, teknologi, dll.",
-        type: "short",
-        required: true,
-    },
-    {
-        id: "email",
-        text: "Apa alamat email Anda?",
-        placeholder: "Masukkan alamat email Anda",
-        type: "email",
-        required: true,
-    },
-    
-    {
-        id: "data_type",
-        text: "Jenis data apa yang digunakan atau disimpan dalam usaha Anda?",
-        placeholder: "",
-        type: "dropdown",
-        options: [
-          "Data Pelanggan",
-          "Data Transaksi",
-          "Data Karyawan",
-          "Data Keuangan",
-          "Data Pemasok",
-          "Lainnya",
-        ],
-        required: true,
-    },
-    {
-        id: "understand_data_type",
-        text: "Apakah Anda memahami deskripsi dari jenis data tersebut?",
-        placeholder: "",
-        type: "radio",
-        options: ["Mengerti", "Tidak Mengerti"],
-        required: true,
-    },
     {
         id: "biaya_pengetahuan",
         text: "Biaya & Pengetahuan",
+        description:
+            "Seberapa besar pemahaman Anda tentang biaya yang dibutuhkan dan pengetahuan teknis untuk mengamankan sistem digital bisnis Anda?",
         placeholder: "",
         type: "slider",
         options: ["Tidak Mengerti", "Mengerti"],
@@ -64,6 +14,8 @@ export const questions: Question[] = [
     {
         id: "pengaruh_kerugian",
         text: "Pengaruh & Kerugian",
+        description:
+            "Seberapa baik Anda memahami potensi dampak atau kerugian yang bisa terjadi jika sistem Anda terkena serangan siber?",
         placeholder: "",
         type: "slider",
         options: ["Tidak Mengerti", "Mengerti"],
@@ -72,17 +24,21 @@ export const questions: Question[] = [
     {
         id: "frekuensi_serangan",
         text: "Frekuensi Serangan",
+        description:
+            "Menurut Anda, seberapa sering kemungkinan terjadinya serangan siber terhadap sistem atau data bisnis Anda?",
         placeholder: "",
         type: "slider",
-        options: ["Tidak Mengerti", "Mengerti"],
+        options: ["Jarang", "Sangat Sering"],
         required: true,
     },
     {
         id: "pemulihan",
         text: "Pemulihan",
+        description:
+            "Seberapa siap Anda dalam melakukan pemulihan jika sistem bisnis terkena gangguan atau serangan siber?",
         placeholder: "",
         type: "slider",
-        options: ["Tidak Mengerti", "Mengerti"],
+        options: ["Belum Siap", "Sangat Siap"],
         required: true,
     },
     {
