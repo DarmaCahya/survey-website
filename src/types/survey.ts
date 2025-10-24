@@ -7,6 +7,7 @@ export interface Question {
     placeholder: string;
     required: boolean;
     options?: string[];
+    description?: string;
 }
 
 export interface AnswerDetail {
@@ -27,6 +28,8 @@ export interface SurveyResponse {
 
 export interface QuestionFieldProps {
     question: Question;
+    value?: string | string[];
+    onChange?: (id: string, value: string | string[]) => void;
 }
 
 export interface AnswerData {
