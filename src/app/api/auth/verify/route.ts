@@ -4,6 +4,7 @@ import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
 import { jwtService } from '@/lib/jwt';
+import { UserProgressService } from '@/lib/user-progress-service';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -13,6 +14,7 @@ import {
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
+const userProgressService = new UserProgressService();
 
 /**
  * Verify token and get user info
@@ -36,7 +38,20 @@ export async function GET(request: NextRequest) {
       return createAuthErrorResponse('Invalid or expired token');
     }
 
-    return createSuccessResponse({ user }, 'Token verified successfully');
+    // Get user progress summary
+    const progress = await userProgressService.getUserProgressSummary(user.id);
+
+    return createSuccessResponse({ 
+      user,
+      progress: {
+        totalAssets: progress.totalAssets,
+        completedAssets: progress.completedAssets,
+        inProgressAssets: progress.inProgressAssets,
+        notStartedAssets: progress.notStartedAssets,
+        progressPercentage: progress.progressPercentage,
+        remainingForms: progress.notStartedAssets + progress.inProgressAssets
+      }
+    }, 'Token verified successfully');
     
   } catch (error) {
     return handleApiError(error, 'Token verification failed');

@@ -1,0 +1,602 @@
+openapi: 3.0.0
+info:
+  title: UMKM Cyber Risk Survey API
+  description: API untuk sistem penilaian risiko cyber UMKM
+  version: 1.0.0
+  contact:
+    name: Survey Team
+    email: survey@example.com
+
+servers:
+  - url: http://localhost:3000/api/form
+    description: Development server
+
+paths:
+  /assets:
+    get:
+      summary: Get all assets with threat counts
+      tags:
+        - Assets
+      responses:
+        '200':
+          description: List of assets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssetSummary'
+                  message:
+                    type: string
+                    example: "Assets retrieved successfully"
+
+  /assets/{id}/threats:
+    get:
+      summary: Get threats for a specific asset
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of threats for the asset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Threat'
+                  message:
+                    type: string
+                    example: "Threats retrieved successfully"
+
+  /submissions:
+    post:
+      summary: Create a new submission
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubmissionRequest'
+      responses:
+        '200':
+          description: Submission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CreateSubmissionResponse'
+                  message:
+                    type: string
+                    example: "Submission created successfully"
+
+  /submissions/{id}/inputs:
+    post:
+      summary: Submit risk assessment inputs
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitInputsRequest'
+      responses:
+        '200':
+          description: Inputs submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmitInputsResponse'
+                  message:
+                    type: string
+                    example: "Inputs submitted successfully"
+
+  /submissions/{id}/score:
+    get:
+      summary: Get calculated risk score
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Risk score retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmitInputsResponse'
+                  message:
+                    type: string
+                    example: "Score retrieved successfully"
+
+  /submissions/{id}/details:
+    get:
+      summary: Get detailed submission with question tracking
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Submission details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmissionDetailsResponse'
+                  message:
+                    type: string
+                    example: "Submission details retrieved successfully"
+
+  /submissions/my-submissions:
+    get:
+      summary: Get all submissions for authenticated user
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User submissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MySubmissionsResponse'
+                  message:
+                    type: string
+                    example: "User submissions retrieved successfully"
+
+  /admin/umkm:
+    get:
+      summary: Get UMKM progress overview (Admin only)
+      tags:
+        - Admin
+      parameters:
+        - name: x-admin-pin
+          in: header
+          required: true
+          schema:
+            type: string
+          example: "admin123"
+      responses:
+        '200':
+          description: UMKM progress retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdminUMKMResponse'
+                  message:
+                    type: string
+                    example: "UMKM progress retrieved successfully"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AssetSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Akun Bank"
+        threatCount:
+          type: integer
+          example: 3
+
+    Threat:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Phishing"
+        description:
+          type: string
+          example: "Upaya mencuri informasi dengan menyamar sebagai pihak yang terpercaya"
+
+    CreateSubmissionRequest:
+      type: object
+      required:
+        - assetId
+        - threatId
+      properties:
+        assetId:
+          type: integer
+          description: "ID of the asset"
+          example: 1
+        threatId:
+          type: integer
+          description: "ID of the threat"
+          example: 1
+
+    CreateSubmissionResponse:
+      type: object
+      properties:
+        submissionId:
+          type: integer
+          example: 123
+
+    SubmitInputsRequest:
+      type: object
+      required:
+        - biaya_pengetahuan
+        - pengaruh_kerugian
+        - Frekuensi_serangan
+        - Pemulihan
+        - mengerti_poin
+      properties:
+        biaya_pengetahuan:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Biaya & Pengetahuan (1-6)"
+          example: 4
+        pengaruh_kerugian:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Pengaruh & Kerugian (1-6)"
+          example: 5
+        Frekuensi_serangan:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Frekuensi Serangan (1-6)"
+          example: 3
+        Pemulihan:
+          type: integer
+          enum: [2, 4, 6]
+          description: "Pemulihan (2/4/6)"
+          example: 4
+        mengerti_poin:
+          type: boolean
+          description: "Apakah user mengerti poin ini (true/false)"
+          example: true
+        Tidak_mengerti_poin:
+          type: boolean
+          description: "Optional: Flag untuk tidak mengerti"
+          example: false
+        description_tidak_mengerti:
+          type: string
+          description: "Optional: Deskripsi jika tidak mengerti"
+          example: "Perlu penjelasan lebih detail tentang ancaman ini"
+
+    SubmitInputsResponse:
+      type: object
+      properties:
+        peluang:
+          type: number
+          format: float
+          example: 4.1667
+        impact:
+          type: number
+          format: float
+          example: 3.5
+        total:
+          type: integer
+          example: 15
+        category:
+          type: string
+          enum: ["LOW", "MEDIUM", "HIGH"]
+          example: "LOW"
+
+    SubmissionDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        submittedAt:
+          type: string
+          format: date-time
+          example: "2025-10-24T13:18:19.354Z"
+        status:
+          type: string
+          enum: ["COMPLETED", "IN_PROGRESS"]
+          example: "COMPLETED"
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            email:
+              type: string
+              example: "test@example.com"
+            name:
+              type: string
+              example: "Test UMKM User"
+        asset:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 2
+            name:
+              type: string
+              example: "Akun Marketplace / Seller Account"
+            description:
+              type: string
+              example: "Akun di platform marketplace (Tokopedia, Shopee, dll.)"
+        threat:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 3
+            name:
+              type: string
+              example: "Brute Force"
+            description:
+              type: string
+              example: "Upaya otomatis menebak kata sandi berkali-kali"
+        answers:
+          type: object
+          properties:
+            biaya_pengetahuan:
+              type: object
+              properties:
+                question: { type: string, example: "Biaya & Pengetahuan" }
+                description: { type: string, example: "Seberapa besar biaya dan pengetahuan yang dibutuhkan?" }
+                answer: { type: integer, example: 4 }
+                scale: { type: string, example: "1-6" }
+                meaning: { type: string, example: "Tinggi - Biaya dan pengetahuan besar" }
+            pengaruh_kerugian:
+              type: object
+              properties:
+                question: { type: string, example: "Pengaruh & Kerugian" }
+                description: { type: string, example: "Seberapa besar pengaruh dan kerugian jika ancaman ini terjadi?" }
+                answer: { type: integer, example: 5 }
+                scale: { type: string, example: "1-6" }
+                meaning: { type: string, example: "Sangat Besar - Pengaruh dan kerugian sangat besar" }
+            frekuensi_serangan:
+              type: object
+              properties:
+                question: { type: string, example: "Frekuensi Serangan" }
+                description: { type: string, example: "Seberapa sering ancaman ini terjadi berdasarkan pengalaman?" }
+                answer: { type: integer, example: 3 }
+                scale: { type: string, example: "1-6" }
+                meaning: { type: string, example: "Kadang-kadang - Kadang terjadi" }
+            pemulihan:
+              type: object
+              properties:
+                question: { type: string, example: "Pemulihan" }
+                description: { type: string, example: "Seberapa cepat Anda bisa pulih jika ancaman ini terjadi?" }
+                answer: { type: integer, example: 4 }
+                scale: { type: string, example: "2/4/6" }
+                meaning: { type: string, example: "Sedang Pulih - Butuh waktu sedang untuk pulih" }
+            understanding:
+              type: object
+              properties:
+                question: { type: string, example: "Pemahaman Ancaman" }
+                description: { type: string, example: "Apakah Anda memahami ancaman ini dengan baik?" }
+                answer: { type: string, enum: ["MENGERTI", "TIDAK_MENGERTI"], example: "MENGERTI" }
+                meaning: { type: string, example: "Mengerti" }
+        riskScore:
+          type: object
+          nullable: true
+          properties:
+            peluang:
+              type: number
+              format: float
+              example: 4.1667
+            impact:
+              type: number
+              format: float
+              example: 3.5
+            total:
+              type: integer
+              example: 15
+            category:
+              type: string
+              enum: ["LOW", "MEDIUM", "HIGH"]
+              example: "LOW"
+            interpretation:
+              type: string
+              example: "Risiko Rendah - Ancaman dapat dikelola dengan mudah"
+            formula:
+              type: object
+              properties:
+                peluang: { type: string, example: "((Biaya_Pengetahuan*2)+(Pengaruh_Kerugian*2)+Frekuensi_Serangan+Pemulihan)/6" }
+                impact: { type: string, example: "(Frekuensi_Serangan+Pemulihan)/2" }
+                total: { type: string, example: "ROUND(Peluang*Impact, 0)" }
+                category: { type: string, example: "IF(Total<=15,'LOW', IF(Total<=25,'MEDIUM','HIGH'))" }
+        feedback:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              field: { type: string }
+              message: { type: string }
+              createdAt: { type: string, format: date-time }
+
+    MySubmissionsResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id: { type: integer, example: 1 }
+            email: { type: string, example: "test@example.com" }
+            name: { type: string, example: "Test UMKM User" }
+        submissions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer, example: 1 }
+              submittedAt: { type: string, format: date-time, example: "2025-10-24T13:18:19.354Z" }
+              understand: { type: string, enum: ["MENGERTI", "TIDAK_MENGERTI"], example: "MENGERTI" }
+              context:
+                type: object
+                properties:
+                  asset:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 2 }
+                      name: { type: string, example: "Akun Marketplace / Seller Account" }
+                      description: { type: string, example: "Akun di platform marketplace" }
+                  threat:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 3 }
+                      name: { type: string, example: "Brute Force" }
+                      description: { type: string, example: "Upaya otomatis menebak kata sandi" }
+              questions:
+                type: object
+                properties:
+                  riskAssessment:
+                    type: object
+                    properties:
+                      "Peluang Serangan":
+                        type: object
+                        properties:
+                          question: { type: string, example: "Peluang Serangan" }
+                          answer: { type: integer, example: 4 }
+                          meaning: { type: string, example: "Tinggi - Ancaman sering terjadi" }
+                      "Impact":
+                        type: object
+                        properties:
+                          question: { type: string, example: "Impact" }
+                          answer: { type: integer, example: 5 }
+                          meaning: { type: string, example: "Sangat Besar - Dampak sangat besar" }
+                      "Total Resiko":
+                        type: object
+                        properties:
+                          question: { type: string, example: "Total Resiko" }
+                          answer: { type: integer, example: 3 }
+                          meaning: { type: string, example: "Kadang-kadang - Kadang terjadi" }
+                      "Kategori Risiko":
+                        type: object
+                        properties:
+                          question: { type: string, example: "Kategori Risiko" }
+                          answer: { type: integer, example: 4 }
+                          meaning: { type: string, example: "Sedang Pulih - Butuh waktu sedang untuk pulih" }
+                  understanding:
+                    type: object
+                    properties:
+                      question: { type: string, example: "Apakah Anda memahami ancaman ini?" }
+                      answer: { type: string, enum: ["MENGERTI", "TIDAK_MENGERTI"], example: "MENGERTI" }
+                      meaning: { type: string, example: "Mengerti" }
+              calculatedScores:
+                type: object
+                nullable: true
+                properties:
+                  peluang: { type: number, format: float, example: 4.1667 }
+                  impact: { type: number, format: float, example: 3.5 }
+                  total: { type: integer, example: 15 }
+                  category: { type: string, enum: ["LOW", "MEDIUM", "HIGH"], example: "LOW" }
+              feedback: { type: array, items: { type: object } }
+              status: { type: string, enum: ["COMPLETED", "IN_PROGRESS"], example: "COMPLETED" }
+        summary:
+          type: object
+          properties:
+            total: { type: integer, example: 2 }
+            completed: { type: integer, example: 2 }
+            inProgress: { type: integer, example: 0 }
+
+    AdminUMKMResponse:
+      type: object
+      properties:
+        umkmList:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer, example: 1 }
+              email: { type: string, example: "umkm1@example.com" }
+              name: { type: string, example: "UMKM Satu" }
+              totalAssets: { type: integer, example: 14 }
+              completedAssets: { type: integer, example: 5 }
+              progressPercentage: { type: integer, example: 36 }
