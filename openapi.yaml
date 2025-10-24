@@ -1,0 +1,465 @@
+openapi: 3.0.3
+info:
+  title: UMKM Cyber Risk Survey API
+  description: API for UMKM Cyber Risk Assessment Survey System
+  version: 1.0.0
+  contact:
+    name: UMKM Cyber Risk Survey Team
+    email: support@umkm-cyber-risk.com
+
+servers:
+  - url: http://localhost:3000/api/form
+    description: Development server
+
+paths:
+  /assets:
+    get:
+      summary: Get all assets
+      description: Retrieve all assets with threat counts
+      tags:
+        - Assets
+      responses:
+        '200':
+          description: Successfully retrieved assets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssetResponse'
+                  message:
+                    type: string
+                    example: "Assets retrieved successfully"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /assets/{id}/threats:
+    get:
+      summary: Get threats for an asset
+      description: Retrieve all threats associated with a specific asset
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Asset ID
+      responses:
+        '200':
+          description: Successfully retrieved threats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ThreatResponse'
+                  message:
+                    type: string
+                    example: "Threats retrieved successfully"
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions:
+    post:
+      summary: Create a new submission
+      description: Create a new risk assessment submission for a specific asset and threat
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubmissionRequest'
+      responses:
+        '200':
+          description: Successfully created submission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CreateSubmissionResponse'
+                  message:
+                    type: string
+                    example: "Submission created successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Asset or threat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/{id}/inputs:
+    post:
+      summary: Submit risk assessment inputs
+      description: Submit risk assessment inputs and calculate scores
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Submission ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitInputsRequest'
+      responses:
+        '200':
+          description: Successfully submitted inputs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmitInputsResponse'
+                  message:
+                    type: string
+                    example: "Inputs submitted successfully"
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/{id}/score:
+    get:
+      summary: Get submission score
+      description: Retrieve calculated risk score for a submission
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Submission ID
+      responses:
+        '200':
+          description: Successfully retrieved score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/GetScoreResponse'
+                  message:
+                    type: string
+                    example: "Score retrieved successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Submission not found or score not calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/umkm:
+    get:
+      summary: Get UMKM progress (Admin only)
+      description: Retrieve UMKM progress for admin dashboard
+      tags:
+        - Admin
+      security:
+        - adminPinAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved UMKM progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UMKMProgressResponse'
+                  message:
+                    type: string
+                    example: "UMKM progress retrieved successfully"
+        '401':
+          description: Invalid admin PIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    adminPinAuth:
+      type: apiKey
+      in: header
+      name: x-admin-pin
+
+  schemas:
+    AssetResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Website Perusahaan"
+        threatCount:
+          type: integer
+          example: 3
+
+    ThreatResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Defacement Website"
+        description:
+          type: string
+          example: "Website diubah oleh pihak tidak bertanggung jawab"
+
+    CreateSubmissionRequest:
+      type: object
+      required:
+        - assetId
+        - threatId
+      properties:
+        assetId:
+          type: integer
+          example: 1
+        threatId:
+          type: integer
+          example: 1
+
+    CreateSubmissionResponse:
+      type: object
+      properties:
+        submissionId:
+          type: integer
+          example: 123
+
+    SubmitInputsRequest:
+      type: object
+      required:
+        - f
+        - g
+        - h
+        - i
+        - understand
+      properties:
+        f:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Biaya & Pengetahuan (1-6)"
+          example: 4
+        g:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Pengaruh & Kerugian (1-6)"
+          example: 5
+        h:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: "Frekuensi (1-6)"
+          example: 3
+        i:
+          type: integer
+          enum: [2, 4, 6]
+          description: "Pemulihan (2/4/6)"
+          example: 4
+        understand:
+          type: string
+          enum: ["MENGERTI", "TIDAK_MENGERTI"]
+          description: "Level pemahaman"
+          example: "MENGERTI"
+
+    SubmitInputsResponse:
+      type: object
+      properties:
+        peluang:
+          type: number
+          format: float
+          description: "J (Peluang Serangan)"
+          example: 4.1667
+        impact:
+          type: number
+          format: float
+          description: "K (Impact)"
+          example: 3.5
+        total:
+          type: integer
+          description: "L (Total Resiko)"
+          example: 15
+        category:
+          type: string
+          enum: ["LOW", "MEDIUM", "HIGH"]
+          description: "M (Kategori)"
+          example: "LOW"
+
+    GetScoreResponse:
+      type: object
+      properties:
+        peluang:
+          type: number
+          format: float
+          description: "J (Peluang Serangan)"
+          example: 4.1667
+        impact:
+          type: number
+          format: float
+          description: "K (Impact)"
+          example: 3.5
+        total:
+          type: integer
+          description: "L (Total Resiko)"
+          example: 15
+        category:
+          type: string
+          enum: ["LOW", "MEDIUM", "HIGH"]
+          description: "M (Kategori)"
+          example: "LOW"
+
+    UMKMProgressResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: "umkm@example.com"
+        name:
+          type: string
+          example: "UMKM Example"
+        totalAssets:
+          type: integer
+          example: 14
+        completedAssets:
+          type: integer
+          example: 5
+        progressPercentage:
+          type: integer
+          example: 36
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Error message"
+        code:
+          type: string
+          example: "ERROR_CODE"
