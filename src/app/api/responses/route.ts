@@ -1,20 +1,52 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextRequest } from "next/server";
+import { db } from "@/lib/database";
+import { jwtService } from "@/lib/jwt";
+import { AuthService } from "@/lib/auth-service";
+import { UserRepository } from "@/lib/user-repository";
+import { passwordService } from "@/lib/password";
+import { handleApiError, createSuccessResponse, createAuthErrorResponse } from "@/lib/error-handler";
 
-const prisma = new PrismaClient();
+// Initialize services with dependency injection
+const userRepository = new UserRepository(db);
+const authService = new AuthService(userRepository, passwordService, jwtService);
 
-export async function GET() {
+/**
+ * Get all survey responses (protected route)
+ * GET /api/responses
+ */
+export async function GET(request: NextRequest) {
     try {
-        const responses = await prisma.response.findMany({
+        const authHeader = request.headers.get('authorization');
+        
+        if (!authHeader) {
+            return createAuthErrorResponse('Authorization header is required');
+        }
+
+        const token = jwtService.extractTokenFromHeader(authHeader);
+        if (!token) {
+            return createAuthErrorResponse('Invalid authorization header format');
+        }
+
+        const user = await authService.validateToken(token);
+        if (!user) {
+            return createAuthErrorResponse('Invalid or expired token');
+        }
+
+        const responses = await db.response.findMany({
             orderBy: { createdAt: "desc" },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                    },
+                },
+            },
         });
 
-        return NextResponse.json({ success: true, data: responses });
+        return createSuccessResponse(responses, 'Responses fetched successfully');
     } catch (error) {
-        console.error("Error fetching responses:", error);
-        return NextResponse.json(
-            { success: false, error: "Failed to fetch responses" },
-            { status: 500 }
-        );
+        return handleApiError(error, 'Failed to fetch responses');
     }
 }
