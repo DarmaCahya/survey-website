@@ -41,6 +41,46 @@ export interface CreateSubmissionResponse {
   submissionId: number;
 }
 
+// New batch submission interfaces
+export interface ThreatAnswer {
+  threatId: number;
+  biaya_pengetahuan: number;
+  pengaruh_kerugian: number;
+  Frekuensi_serangan: number;
+  Pemulihan: number;
+  mengerti_poin: boolean;
+  Tidak_mengerti_poin?: boolean;
+  description_tidak_mengerti?: string;
+}
+
+export interface BatchSubmissionRequest {
+  assetId: number;
+  threats: ThreatAnswer[];
+}
+
+export interface BatchSubmissionResponse {
+  submissions: Array<{
+    threatId: number;
+    submissionId: number;
+    success: boolean;
+    error?: string;
+    result?: {
+      peluang: number;
+      impact: number;
+      total: number;
+      category: RiskCategory;
+      threatDescription?: {
+        category: RiskCategory;
+        threatName: string;
+        description: string;
+        recommendations: string[];
+        priority: 'LOW' | 'MEDIUM' | 'HIGH';
+        actionRequired: boolean;
+      };
+    };
+  }>;
+}
+
 export interface SubmitInputsRequest {
   biaya_pengetahuan: number;           
   pengaruh_kerugian: number;           
@@ -71,6 +111,14 @@ export interface GetScoreResponse {
   impact: number;
   total: number;
   category: RiskCategory;
+  threatDescription?: {
+    category: RiskCategory;
+    threatName: string;
+    description: string;
+    recommendations: string[];
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    actionRequired: boolean;
+  };
 }
 
 export interface AssetResponse {

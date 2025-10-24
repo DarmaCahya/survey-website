@@ -19,7 +19,7 @@ import {
   createAuthErrorResponse,
   validateRequestBody 
 } from '@/lib/error-handler';
-import { CreateSubmissionRequest } from '@/types/risk';
+import { CreateSubmissionRequest, BatchSubmissionRequest } from '@/types/risk';
 
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
@@ -64,15 +64,31 @@ export async function POST(request: NextRequest) {
 
     // Validate request body
     const body = await request.json();
-    validateRequestBody(body, ['assetId', 'threatId']);
+    
+    // Check if this is a batch submission (has 'threats' array) or single submission
+    if (body.threats && Array.isArray(body.threats)) {
+      // Batch submission
+      validateRequestBody(body, ['assetId', 'threats']);
+      
+      const batchRequest: BatchSubmissionRequest = {
+        assetId: body.assetId,
+        threats: body.threats
+      };
 
-    const submissionRequest: CreateSubmissionRequest = {
-      assetId: body.assetId,
-      threatId: body.threatId
-    };
+      const result = await umkmSurveyService.createBatchSubmission(user.id, batchRequest);
+      return createSuccessResponse(result, 'Batch submissions created successfully');
+    } else {
+      // Single submission (backward compatibility)
+      validateRequestBody(body, ['assetId', 'threatId']);
+      
+      const submissionRequest: CreateSubmissionRequest = {
+        assetId: body.assetId,
+        threatId: body.threatId
+      };
 
-    const result = await umkmSurveyService.createSubmission(user.id, submissionRequest);
-    return createSuccessResponse(result, 'Submission created successfully');
+      const result = await umkmSurveyService.createSubmission(user.id, submissionRequest);
+      return createSuccessResponse(result, 'Submission created successfully');
+    }
 
   } catch (error) {
     return handleApiError(error, 'Failed to create submission');

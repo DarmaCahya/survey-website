@@ -32,7 +32,7 @@ export interface ISubmissionRepository {
   findById(id: number): Promise<any | null>;
   findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<any | null>;
   updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void>;
-  updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory): Promise<void>;
+  updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: any): Promise<void>;
   updateUnderstand(submissionId: number, understand: UnderstandLevel): Promise<void>;
 }
 
@@ -222,7 +222,7 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
-  async updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory): Promise<void> {
+  async updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: any): Promise<void> {
     await db.score.upsert({
       where: { submissionId },
       create: {
@@ -230,13 +230,15 @@ export class SubmissionRepository implements ISubmissionRepository {
         peluang,
         impact,
         total,
-        category
+        category,
+        threatDescription: threatDescription || null
       },
       update: {
         peluang,
         impact,
         total,
-        category
+        category,
+        threatDescription: threatDescription || null
       }
     });
   }

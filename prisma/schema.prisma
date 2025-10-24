@@ -156,6 +156,9 @@ model Score {
   total    Int        // L (Total Resiko)
   category RiskCategory // M (Kategori)
   
+  // Threat-specific description and recommendations
+  threatDescription Json? // Stores threat-specific description, recommendations, priority, actionRequired
+  
   // Relations
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   

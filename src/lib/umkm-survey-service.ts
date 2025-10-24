@@ -11,6 +11,8 @@ import {
 import { 
   CreateSubmissionRequest, 
   CreateSubmissionResponse,
+  BatchSubmissionRequest,
+  BatchSubmissionResponse,
   SubmitInputsRequest,
   SubmitInputsResponse,
   GetScoreResponse,
@@ -31,6 +33,7 @@ export interface IUMKMSurveyService {
   getAssets(): Promise<AssetResponse[]>;
   getAssetThreats(assetId: number): Promise<ThreatResponse[]>;
   createSubmission(userId: number, request: CreateSubmissionRequest): Promise<CreateSubmissionResponse>;
+  createBatchSubmission(userId: number, request: BatchSubmissionRequest): Promise<BatchSubmissionResponse>;
   submitInputs(userId: number, submissionId: number, request: SubmitInputsRequest): Promise<SubmitInputsResponse>;
   getScore(userId: number, submissionId: number): Promise<GetScoreResponse>;
   getUMKMProgress(): Promise<UMKMProgressResponse[]>;
@@ -112,6 +115,130 @@ export class UMKMSurveyService implements IUMKMSurveyService {
   }
 
   /**
+   * Create batch submissions for multiple threats in an asset
+   */
+  async createBatchSubmission(
+    userId: number, 
+    request: BatchSubmissionRequest
+  ): Promise<BatchSubmissionResponse> {
+    // Validate asset exists
+    const asset = await this.assetRepository.findById(request.assetId);
+    if (!asset) {
+      throw new Error('Asset not found');
+    }
+
+    // Get all threats for this asset to validate threat IDs
+    const assetThreats = await this.assetRepository.findThreatsByAssetId(request.assetId);
+    const validThreatIds = assetThreats.map(t => t.id);
+
+    // Validate completeness: all threats for this asset must be included
+    const submittedThreatIds = request.threats.map(t => t.threatId);
+    const missingThreatIds = validThreatIds.filter(id => !submittedThreatIds.includes(id));
+    const invalidThreatIds = submittedThreatIds.filter(id => !validThreatIds.includes(id));
+
+    if (missingThreatIds.length > 0) {
+      const missingThreatNames = assetThreats
+        .filter(t => missingThreatIds.includes(t.id))
+        .map(t => `${t.name} (ID: ${t.id})`)
+        .join(', ');
+      throw new Error(`Missing threats for asset ${request.assetId}. Please include all threats: ${missingThreatNames}`);
+    }
+
+    if (invalidThreatIds.length > 0) {
+      throw new Error(`Invalid threat IDs for asset ${request.assetId}: ${invalidThreatIds.join(', ')}. Valid threat IDs are: ${validThreatIds.join(', ')}`);
+    }
+
+    // Validate all threat IDs in the request (redundant check but kept for safety)
+    for (const threatAnswer of request.threats) {
+      if (!validThreatIds.includes(threatAnswer.threatId)) {
+        throw new Error(`Threat ID ${threatAnswer.threatId} not found for asset ${request.assetId}`);
+      }
+    }
+
+    const results = [];
+
+    // Process each threat submission
+    for (const threatAnswer of request.threats) {
+      try {
+        // Check if submission already exists for this user-asset-threat combination
+        const existingSubmission = await this.submissionRepository.findByUserAssetThreat(
+          userId, 
+          request.assetId, 
+          threatAnswer.threatId
+        );
+        
+        if (existingSubmission) {
+          results.push({
+            threatId: threatAnswer.threatId,
+            submissionId: existingSubmission.id,
+            success: false,
+            error: 'Submission already exists for this asset-threat combination'
+          });
+          continue;
+        }
+
+        // Create submission
+        const submissionId = await this.submissionRepository.create(
+          userId, 
+          request.assetId, 
+          threatAnswer.threatId
+        );
+
+        // Convert answers to SubmitInputsRequest format
+        const inputsRequest: SubmitInputsRequest = {
+          biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
+          pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
+          Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
+          Pemulihan: threatAnswer.Pemulihan,
+          mengerti_poin: threatAnswer.mengerti_poin,
+          Tidak_mengerti_poin: threatAnswer.Tidak_mengerti_poin,
+          description_tidak_mengerti: threatAnswer.description_tidak_mengerti
+        };
+
+        // Submit inputs and calculate scores
+        const result = await this.submitInputs(userId, submissionId, inputsRequest);
+
+        results.push({
+          threatId: threatAnswer.threatId,
+          submissionId: submissionId,
+          success: true,
+          result: result
+        });
+
+      } catch (error) {
+        results.push({
+          threatId: threatAnswer.threatId,
+          submissionId: 0,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        });
+      }
+    }
+
+    // Update form progress to completed if all submissions were successful
+    const allSuccessful = results.every(r => r.success);
+    if (allSuccessful) {
+      await this.formProgressRepository.updateProgress(
+        userId, 
+        request.assetId, 
+        FormStatus.COMPLETED
+      );
+    } else {
+      // Update to in_progress if some submissions were successful
+      const someSuccessful = results.some(r => r.success);
+      if (someSuccessful) {
+        await this.formProgressRepository.updateProgress(
+          userId, 
+          request.assetId, 
+          FormStatus.IN_PROGRESS
+        );
+      }
+    }
+
+    return { submissions: results };
+  }
+
+  /**
    * Submit risk assessment inputs and calculate scores
    */
   async submitInputs(
@@ -167,7 +294,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
         scoreWithContext.peluang,
         scoreWithContext.impact,
         scoreWithContext.total,
-        scoreWithContext.category
+        scoreWithContext.category,
+        scoreWithContext.threatDescription
       );
 
       // Update understanding level
@@ -220,7 +348,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       peluang: submission.score.peluang,
       impact: submission.score.impact,
       total: submission.score.total,
-      category: submission.score.category
+      category: submission.score.category,
+      threatDescription: submission.score.threatDescription
     };
   }
 
