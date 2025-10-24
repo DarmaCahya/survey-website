@@ -18,6 +18,13 @@ export interface IAssetRepository {
 }
 
 /**
+ * Threat repository interface
+ */
+export interface IThreatRepository {
+  findById(id: number): Promise<ThreatResponse | null>;
+}
+
+/**
  * Submission repository interface
  */
 export interface ISubmissionRepository {
@@ -95,6 +102,25 @@ export class AssetRepository implements IAssetRepository {
       name: threat.name,
       description: threat.description || undefined
     }));
+  }
+}
+
+/**
+ * Threat repository implementation
+ */
+export class ThreatRepository implements IThreatRepository {
+  async findById(id: number): Promise<ThreatResponse | null> {
+    const threat = await db.threat.findUnique({
+      where: { id }
+    });
+
+    if (!threat) return null;
+
+    return {
+      id: threat.id,
+      name: threat.name,
+      description: threat.description || undefined
+    };
   }
 }
 

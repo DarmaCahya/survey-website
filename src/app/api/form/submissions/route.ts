@@ -6,6 +6,7 @@ import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
 import { 
   AssetRepository, 
+  ThreatRepository,
   SubmissionRepository, 
   FormProgressRepository,
   AdminRepository 
@@ -24,12 +25,14 @@ import { CreateSubmissionRequest } from '@/types/risk';
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
 const assetRepository = new AssetRepository();
+const threatRepository = new ThreatRepository();
 const submissionRepository = new SubmissionRepository();
 const formProgressRepository = new FormProgressRepository();
 const adminRepository = new AdminRepository();
 
 const umkmSurveyService = new UMKMSurveyService(
   assetRepository,
+  threatRepository,
   submissionRepository,
   formProgressRepository,
   adminRepository,

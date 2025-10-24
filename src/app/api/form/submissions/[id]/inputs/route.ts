@@ -6,6 +6,7 @@ import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
 import { 
   AssetRepository, 
+  ThreatRepository,
   SubmissionRepository, 
   FormProgressRepository,
   AdminRepository 
@@ -24,12 +25,14 @@ import { SubmitInputsRequest } from '@/types/risk';
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
 const assetRepository = new AssetRepository();
+const threatRepository = new ThreatRepository();
 const submissionRepository = new SubmissionRepository();
 const formProgressRepository = new FormProgressRepository();
 const adminRepository = new AdminRepository();
 
 const umkmSurveyService = new UMKMSurveyService(
   assetRepository,
+  threatRepository,
   submissionRepository,
   formProgressRepository,
   adminRepository,
@@ -42,7 +45,7 @@ const umkmSurveyService = new UMKMSurveyService(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate user
@@ -62,14 +65,31 @@ export async function POST(
       return createAuthErrorResponse('Invalid or expired token');
     }
 
+    // Await params for Next.js 15 compatibility
+    const resolvedParams = await params;
+    
     // Validate submission ID
-    const submissionId = parseInt(params.id);
+    const submissionId = parseInt(resolvedParams.id);
     if (isNaN(submissionId)) {
       return handleApiError(new Error('Invalid submission ID'), 'Invalid submission ID');
     }
 
-    // Validate request body
-    const body = await request.json();
+    // Validate request body with error handling
+    let body;
+    try {
+      const rawBody = await request.text();
+      console.log('Raw request body:', rawBody);
+      console.log('Content-Type:', request.headers.get('content-type'));
+      
+      if (!rawBody || rawBody.trim() === '') {
+        return handleApiError(new Error('Empty request body'), 'Request body is empty');
+      }
+      
+      body = JSON.parse(rawBody);
+    } catch (error) {
+      console.error('JSON parsing error:', error);
+      return handleApiError(new Error(`Invalid JSON in request body: ${error.message}`), 'Invalid request body');
+    }
     validateRequestBody(body, ['biaya_pengetahuan', 'pengaruh_kerugian', 'Frekuensi_serangan', 'Pemulihan', 'mengerti_poin']);
 
     // Convert boolean mengerti_poin to UnderstandLevel enum

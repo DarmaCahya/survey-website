@@ -72,8 +72,12 @@ export async function GET(request: NextRequest) {
     // Transform submissions to include question tracking
     const submissionsWithQuestions = submissions.map(submission => ({
       id: submission.id,
+      assetId: submission.assetId,
+      threatId: submission.threatId,
       submittedAt: submission.submittedAt,
       understand: submission.understand,
+      assetName: submission.asset.name,
+      threatName: submission.threat.name,
       context: {
         asset: submission.asset,
         threat: submission.threat

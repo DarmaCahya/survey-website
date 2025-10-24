@@ -56,6 +56,14 @@ export interface SubmitInputsResponse {
   impact: number;
   total: number;
   category: RiskCategory;
+  threatDescription?: {
+    category: RiskCategory;
+    threatName: string;
+    description: string;
+    recommendations: string[];
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    actionRequired: boolean;
+  };
 }
 
 export interface GetScoreResponse {

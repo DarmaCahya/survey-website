@@ -20,7 +20,7 @@ const authService = new AuthService(userRepository, passwordService, jwtService)
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authenticate user
@@ -40,8 +40,11 @@ export async function GET(
       return createAuthErrorResponse('Invalid or expired token');
     }
 
+    // Await params for Next.js 15 compatibility
+    const resolvedParams = await params;
+    
     // Validate submission ID
-    const submissionId = parseInt(params.id);
+    const submissionId = parseInt(resolvedParams.id);
     if (isNaN(submissionId)) {
       return handleApiError(new Error('Invalid submission ID'), 'Invalid submission ID');
     }

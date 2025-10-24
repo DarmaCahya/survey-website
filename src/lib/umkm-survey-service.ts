@@ -1,5 +1,6 @@
 import { 
   IAssetRepository, 
+  IThreatRepository,
   ISubmissionRepository, 
   IFormProgressRepository,
   IAdminRepository 
@@ -38,6 +39,7 @@ export interface IUMKMSurveyService {
 export class UMKMSurveyService implements IUMKMSurveyService {
   constructor(
     private assetRepository: IAssetRepository,
+    private threatRepository: IThreatRepository,
     private submissionRepository: ISubmissionRepository,
     private formProgressRepository: IFormProgressRepository,
     private adminRepository: IAdminRepository,
@@ -127,17 +129,28 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       throw new Error('Unauthorized access to submission');
     }
 
+    // Check if inputs have already been submitted for this submission
+    if (submission.riskInput) {
+      throw new Error('Inputs have already been submitted for this submission. Each submission can only be completed once.');
+    }
+
     try {
       // Convert boolean mengerti_poin to UnderstandLevel enum
       const understandLevel = request.mengerti_poin ? 'MENGERTI' : 'TIDAK_MENGERTI';
 
-      // Calculate risk score using new field names
-      const score = this.riskCalculationService.calculate({
+      // Get threat name for context-aware calculation
+      const threat = await this.threatRepository.findById(submission.threatId);
+      if (!threat) {
+        throw new Error('Threat not found');
+      }
+
+      // Calculate risk score with threat context
+      const scoreWithContext = this.riskCalculationService.calculateWithThreatContext({
         f: request.biaya_pengetahuan,
         g: request.pengaruh_kerugian,
         h: request.Frekuensi_serangan,
         i: request.Pemulihan
-      });
+      }, threat.name);
 
       // Update risk inputs using new field names
       await this.submissionRepository.updateRiskInput(
@@ -151,10 +164,10 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       // Update score
       await this.submissionRepository.updateScore(
         submissionId,
-        score.peluang,
-        score.impact,
-        score.total,
-        score.category
+        scoreWithContext.peluang,
+        scoreWithContext.impact,
+        scoreWithContext.total,
+        scoreWithContext.category
       );
 
       // Update understanding level
@@ -171,10 +184,11 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       );
 
       return {
-        peluang: score.peluang,
-        impact: score.impact,
-        total: score.total,
-        category: score.category
+        peluang: scoreWithContext.peluang,
+        impact: scoreWithContext.impact,
+        total: scoreWithContext.total,
+        category: scoreWithContext.category,
+        threatDescription: scoreWithContext.threatDescription
       };
 
     } catch (error) {

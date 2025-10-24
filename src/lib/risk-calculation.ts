@@ -1,4 +1,5 @@
 import { RiskInput, RiskScore, RiskCategory, RiskValidationError, InvalidRiskInputError } from '@/types/risk';
+import { ThreatDescriptionService, ThreatSpecificDescription } from './threat-description-service';
 
 /**
  * Core risk calculation service following SOLID principles
@@ -7,10 +8,17 @@ import { RiskInput, RiskScore, RiskCategory, RiskValidationError, InvalidRiskInp
  */
 export interface IRiskCalculationService {
   calculate(input: RiskInput): RiskScore;
+  calculateWithThreatContext(input: RiskInput, threatName: string): RiskScore & { threatDescription: ThreatSpecificDescription };
   validateInput(input: RiskInput): void;
 }
 
 export class RiskCalculationService implements IRiskCalculationService {
+  private threatDescriptionService: ThreatDescriptionService;
+
+  constructor() {
+    this.threatDescriptionService = new ThreatDescriptionService();
+  }
+
   /**
    * Calculate risk score based on UMKM Cyber Risk Survey formula
    * 
@@ -50,6 +58,22 @@ export class RiskCalculationService implements IRiskCalculationService {
       impact: Math.round(impact * 10000) / 10000,   // Round to 4 decimal places
       total,
       category
+    };
+  }
+
+  /**
+   * Calculate risk score with threat-specific description
+   * @param input Risk assessment inputs
+   * @param threatName Name of the threat being assessed
+   * @returns Calculated risk score with threat-specific description
+   */
+  calculateWithThreatContext(input: RiskInput, threatName: string): RiskScore & { threatDescription: ThreatSpecificDescription } {
+    const riskScore = this.calculate(input);
+    const threatDescription = this.threatDescriptionService.generateThreatDescription(threatName, riskScore.category);
+    
+    return {
+      ...riskScore,
+      threatDescription
     };
   }
 
