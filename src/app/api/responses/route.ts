@@ -4,11 +4,13 @@ import { jwtService } from "@/lib/jwt";
 import { AuthService } from "@/lib/auth-service";
 import { UserRepository } from "@/lib/user-repository";
 import { passwordService } from "@/lib/password";
+import { UserProgressService } from "@/lib/user-progress-service";
 import { handleApiError, createSuccessResponse, createAuthErrorResponse } from "@/lib/error-handler";
 
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
+const userProgressService = new UserProgressService();
 
 /**
  * Get all survey responses (protected route)
@@ -32,6 +34,13 @@ export async function GET(request: NextRequest) {
             return createAuthErrorResponse('Invalid or expired token');
         }
 
+        // Get detailed user progress
+        const detailedProgress = await userProgressService.getUserProgress(user.id);
+
+        // Get all users progress for admin view
+        const allUsersProgress = await userProgressService.getAllUsersProgress();
+
+        // Get survey responses (legacy data)
         const responses = await db.response.findMany({
             orderBy: { createdAt: "desc" },
             include: {
@@ -45,7 +54,30 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        return createSuccessResponse(responses, 'Responses fetched successfully');
+        return createSuccessResponse({
+            // Current user's detailed progress
+            userProgress: {
+                userId: user.id,
+                userEmail: user.email,
+                userName: user.name,
+                progress: detailedProgress
+            },
+            // All users progress summary (admin view)
+            allUsersProgress,
+            // Legacy survey responses
+            legacyResponses: responses,
+            // Summary statistics
+            summary: {
+                totalUsers: allUsersProgress.length,
+                totalAssets: detailedProgress.totalAssets,
+                averageProgress: allUsersProgress.length > 0 
+                    ? Math.round(allUsersProgress.reduce((sum, u) => sum + u.progress.progressPercentage, 0) / allUsersProgress.length)
+                    : 0,
+                usersCompleted: allUsersProgress.filter(u => u.progress.progressPercentage === 100).length,
+                usersInProgress: allUsersProgress.filter(u => u.progress.progressPercentage > 0 && u.progress.progressPercentage < 100).length,
+                usersNotStarted: allUsersProgress.filter(u => u.progress.progressPercentage === 0).length
+            }
+        }, 'Survey progress and responses fetched successfully');
     } catch (error) {
         return handleApiError(error, 'Failed to fetch responses');
     }
