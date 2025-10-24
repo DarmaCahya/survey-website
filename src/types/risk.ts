@@ -42,11 +42,13 @@ export interface CreateSubmissionResponse {
 }
 
 export interface SubmitInputsRequest {
-  f: number;
-  g: number;
-  h: number;
-  i: number;
-  understand: UnderstandLevel;
+  biaya_pengetahuan: number;           
+  pengaruh_kerugian: number;           
+  Frekuensi_serangan: number;          
+  Pemulihan: number;                   
+  mengerti_poin: boolean;              
+  Tidak_mengerti_poin?: boolean;       
+  description_tidak_mengerti?: string; 
 }
 
 export interface SubmitInputsResponse {

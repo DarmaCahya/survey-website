@@ -94,7 +94,7 @@ async function testUMKMSurveyAPI() {
 
     // Step 5: Submit risk assessment inputs (test case from requirements)
     console.log('5️⃣ Testing POST /submissions/{id}/inputs...');
-    console.log('   Test case: F=4, G=5, H=3, I=4');
+    console.log('   Test case: biaya_pengetahuan=4, pengaruh_kerugian=5, Frekuensi_serangan=3, Pemulihan=4');
     console.log('   Expected: J=4.1667, K=3.5, L=15, Category="LOW"');
     
     const submitInputsResponse = await fetch(`${BASE_URL}/submissions/${submissionId}/inputs`, {
@@ -104,11 +104,13 @@ async function testUMKMSurveyAPI() {
         'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({
-        f: 4,
-        g: 5,
-        h: 3,
-        i: 4,
-        understand: 'MENGERTI'
+        biaya_pengetahuan: 4,
+        pengaruh_kerugian: 5,
+        Frekuensi_serangan: 3,
+        Pemulihan: 4,
+        mengerti_poin: true,
+        Tidak_mengerti_poin: false,
+        description_tidak_mengerti: "Semua sudah jelas"
       })
     });
     
@@ -183,11 +185,11 @@ async function testUMKMSurveyAPI() {
         'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({
-        f: 7, // Invalid: should be 1-6
-        g: 5,
-        h: 3,
-        i: 4,
-        understand: 'MENGERTI'
+        biaya_pengetahuan: 7, // Invalid: should be 1-6
+        pengaruh_kerugian: 5,
+        Frekuensi_serangan: 3,
+        Pemulihan: 4,
+        mengerti_poin: true
       })
     });
     
@@ -214,6 +216,33 @@ async function testUMKMSurveyAPI() {
     if (!duplicateData.success) {
       console.log(`   Message: ${duplicateData.error}`);
     }
+
+    // Step 10: Test question tracking endpoints
+    console.log('\n🔟 Testing question tracking endpoints...');
+    
+    // Test get submission details with question tracking
+    const detailsResponse = await fetch(`${BASE_URL}/submissions/${submissionId}/details`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    const detailsData = await detailsResponse.json();
+    console.log('✅ Submission details with questions:', detailsData.success ? 'PASSED' : 'FAILED');
+    if (detailsData.success) {
+      console.log(`   Questions tracked: ${Object.keys(detailsData.data.questions.riskAssessment).length} risk questions + 1 understanding question`);
+      console.log(`   Asset: ${detailsData.data.context.asset.name}`);
+      console.log(`   Threat: ${detailsData.data.context.threat.name}`);
+    }
+    
+    // Test get all user submissions with question tracking
+    const mySubmissionsResponse = await fetch(`${BASE_URL}/submissions/my-submissions`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    const mySubmissionsData = await mySubmissionsResponse.json();
+    console.log('✅ My submissions with questions:', mySubmissionsData.success ? 'PASSED' : 'FAILED');
+    if (mySubmissionsData.success) {
+      console.log(`   Total submissions: ${mySubmissionsData.data.summary.total}`);
+      console.log(`   Completed: ${mySubmissionsData.data.summary.completed}`);
+      console.log(`   In Progress: ${mySubmissionsData.data.summary.inProgress}`);
+    }
     console.log();
 
     console.log('🎉 All UMKM Survey API tests completed!');
@@ -227,6 +256,7 @@ async function testUMKMSurveyAPI() {
     console.log('   - Admin endpoint: ✅');
     console.log('   - Error handling: ✅');
     console.log('   - Duplicate prevention: ✅');
+    console.log('   - Question tracking: ✅');
 
   } catch (error) {
     console.error('❌ Test failed with error:', error);

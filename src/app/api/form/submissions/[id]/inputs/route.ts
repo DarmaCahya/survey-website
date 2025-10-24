@@ -70,14 +70,19 @@ export async function POST(
 
     // Validate request body
     const body = await request.json();
-    validateRequestBody(body, ['f', 'g', 'h', 'i', 'understand']);
+    validateRequestBody(body, ['biaya_pengetahuan', 'pengaruh_kerugian', 'Frekuensi_serangan', 'Pemulihan', 'mengerti_poin']);
+
+    // Convert boolean mengerti_poin to UnderstandLevel enum
+    const understandLevel = body.mengerti_poin ? 'MENGERTI' : 'TIDAK_MENGERTI';
 
     const inputsRequest: SubmitInputsRequest = {
-      f: body.f,
-      g: body.g,
-      h: body.h,
-      i: body.i,
-      understand: body.understand
+      biaya_pengetahuan: body.biaya_pengetahuan,
+      pengaruh_kerugian: body.pengaruh_kerugian,
+      Frekuensi_serangan: body.Frekuensi_serangan,
+      Pemulihan: body.Pemulihan,
+      mengerti_poin: body.mengerti_poin,
+      Tidak_mengerti_poin: body.Tidak_mengerti_poin,
+      description_tidak_mengerti: body.description_tidak_mengerti
     };
 
     const result = await umkmSurveyService.submitInputs(user.id, submissionId, inputsRequest);

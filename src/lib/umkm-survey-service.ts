@@ -128,21 +128,24 @@ export class UMKMSurveyService implements IUMKMSurveyService {
     }
 
     try {
-      // Calculate risk score
+      // Convert boolean mengerti_poin to UnderstandLevel enum
+      const understandLevel = request.mengerti_poin ? 'MENGERTI' : 'TIDAK_MENGERTI';
+
+      // Calculate risk score using new field names
       const score = this.riskCalculationService.calculate({
-        f: request.f,
-        g: request.g,
-        h: request.h,
-        i: request.i
+        f: request.biaya_pengetahuan,
+        g: request.pengaruh_kerugian,
+        h: request.Frekuensi_serangan,
+        i: request.Pemulihan
       });
 
-      // Update risk inputs
+      // Update risk inputs using new field names
       await this.submissionRepository.updateRiskInput(
         submissionId,
-        request.f,
-        request.g,
-        request.h,
-        request.i
+        request.biaya_pengetahuan,
+        request.pengaruh_kerugian,
+        request.Frekuensi_serangan,
+        request.Pemulihan
       );
 
       // Update score
@@ -157,7 +160,7 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       // Update understanding level
       await this.submissionRepository.updateUnderstand(
         submissionId,
-        request.understand
+        understandLevel
       );
 
       // Update form progress to submitted
