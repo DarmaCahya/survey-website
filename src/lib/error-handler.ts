@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import { AuthError } from '@/types/auth';
+import { 
+  ValidationError, 
+  InvalidRiskInputError, 
+  BusinessLogicError, 
+  ResourceNotFoundError, 
+  DuplicateResourceError 
+} from '@/lib/custom-errors';
 
 /**
  * Error handling utilities for API routes
@@ -9,14 +16,15 @@ import { AuthError } from '@/types/auth';
 export interface ApiErrorResponse {
   success: false;
   error: string;
-  code?: string;
+  code: string;
+  message: string;
   details?: Record<string, unknown>;
 }
 
 export interface ApiSuccessResponse<T = unknown> {
   success: true;
   data: T;
-  message?: string;
+  message: string;
 }
 
 export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
@@ -37,6 +45,94 @@ export function handleApiError(error: unknown, defaultMessage: string = 'Interna
         success: false,
         error: error.message,
         code: error.code,
+        message: error.message,
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  // Handle ValidationError
+  if (error instanceof ValidationError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+        message: error.message,
+        details: {
+          field: error.field,
+          value: error.value,
+          allowedValues: error.allowedValues,
+        },
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  // Handle InvalidRiskInputError
+  if (error instanceof InvalidRiskInputError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+        message: error.message,
+        details: {
+          field: error.field,
+          fieldName: error.field,
+          fieldDescription: error.description,
+          value: error.value,
+          allowedValues: error.allowedValues,
+          hint: `Please provide a valid value for ${error.description || error.field}. Allowed values are: ${error.allowedValues?.join(', ')}`,
+        },
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  // Handle BusinessLogicError
+  if (error instanceof BusinessLogicError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  // Handle ResourceNotFoundError
+  if (error instanceof ResourceNotFoundError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+        message: error.message,
+        details: {
+          resourceType: error.resourceType,
+          resourceId: error.resourceId,
+        },
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  // Handle DuplicateResourceError
+  if (error instanceof DuplicateResourceError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+        message: error.message,
+        details: {
+          resourceType: error.resourceType,
+          conflictingFields: error.conflictingFields,
+        },
       },
       { status: error.statusCode }
     );
@@ -49,6 +145,7 @@ export function handleApiError(error: unknown, defaultMessage: string = 'Interna
         success: false,
         error: error.message,
         code: 'INTERNAL_ERROR',
+        message: error.message,
       },
       { status: 500 }
     );
@@ -60,6 +157,7 @@ export function handleApiError(error: unknown, defaultMessage: string = 'Interna
       success: false,
       error: defaultMessage,
       code: 'UNKNOWN_ERROR',
+      message: defaultMessage,
     },
     { status: 500 }
   );
@@ -68,12 +166,12 @@ export function handleApiError(error: unknown, defaultMessage: string = 'Interna
 /**
  * Create success response
  * @param data - Response data
- * @param message - Optional success message
+ * @param message - Success message
  * @returns NextResponse with success data
  */
 export function createSuccessResponse<T>(
   data: T, 
-  message?: string
+  message: string = 'Operation completed successfully'
 ): NextResponse<ApiSuccessResponse<T>> {
   return NextResponse.json({
     success: true,
@@ -151,6 +249,7 @@ export function createValidationErrorResponse(
       success: false,
       error: message,
       code: 'VALIDATION_ERROR',
+      message,
       details,
     },
     { status: 400 }
@@ -168,6 +267,7 @@ export function createAuthErrorResponse(message: string = 'Authentication failed
       success: false,
       error: message,
       code: 'AUTHENTICATION_ERROR',
+      message,
     },
     { status: 401 }
   );
@@ -184,6 +284,7 @@ export function createAuthorizationErrorResponse(message: string = 'Access denie
       success: false,
       error: message,
       code: 'AUTHORIZATION_ERROR',
+      message,
     },
     { status: 403 }
   );
@@ -200,6 +301,7 @@ export function createNotFoundErrorResponse(message: string = 'Resource not foun
       success: false,
       error: message,
       code: 'NOT_FOUND',
+      message,
     },
     { status: 404 }
   );

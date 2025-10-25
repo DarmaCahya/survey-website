@@ -62,13 +62,13 @@ DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/survey_database
 JWT_SECRET=8bee05d9f05b1d367ed47f9da766521c
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_EXPIRES_IN=30d
-ADMIN_PIN=1234
+ADMIN_PIN=akanselesai2025
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
 PORT=3000
 HOSTNAME=0.0.0.0
 EOF
-
+            
 # Create cleanup script
 echo "🧹 Creating cleanup script..."
 cat > cleanup.sh << 'EOF'

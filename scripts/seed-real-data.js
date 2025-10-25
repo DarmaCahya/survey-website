@@ -1,4 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+#!/usr/bin/env node
+
+/**
+ * Script to seed the database with real UMKM survey data
+ * Run this script to populate the database with actual assets and threats
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -341,17 +349,20 @@ async function seedRealData() {
   }
 }
 
-// Run seeding if this file is executed directly
-if (require.main === module) {
-  seedRealData()
-    .then(() => {
-      console.log('✅ Real data seeding completed');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ Real data seeding failed:', error);
-      process.exit(1);
-    });
+async function main() {
+  console.log('🚀 Starting UMKM Survey Database Seeding...');
+  console.log('=====================================');
+  
+  try {
+    await seedRealData();
+    console.log('=====================================');
+    console.log('✅ Database seeding completed successfully!');
+    console.log('🎯 You can now run the survey application with real data');
+  } catch (error) {
+    console.log('=====================================');
+    console.error('❌ Database seeding failed:', error);
+    process.exit(1);
+  }
 }
 
-export { seedRealData };
+main();

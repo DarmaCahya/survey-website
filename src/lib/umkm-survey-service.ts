@@ -8,6 +8,7 @@ import {
 import { 
   IRiskCalculationService 
 } from '@/lib/risk-calculation';
+import { InvalidRiskInputError } from '@/lib/custom-errors';
 import { 
   CreateSubmissionRequest, 
   CreateSubmissionResponse,
@@ -19,7 +20,6 @@ import {
   AssetResponse,
   ThreatResponse,
   UMKMProgressResponse,
-  RiskValidationError,
   FormStatus,
   UnderstandLevel,
   RiskCategory
@@ -132,28 +132,12 @@ export class UMKMSurveyService implements IUMKMSurveyService {
     const assetThreats = await this.assetRepository.findThreatsByAssetId(request.assetId);
     const validThreatIds = assetThreats.map(t => t.id);
 
-    // Validate completeness: all threats for this asset must be included
+    // Validate that submitted threat IDs are valid for this asset
     const submittedThreatIds = request.threats.map(t => t.threatId);
-    const missingThreatIds = validThreatIds.filter(id => !submittedThreatIds.includes(id));
     const invalidThreatIds = submittedThreatIds.filter(id => !validThreatIds.includes(id));
-
-    if (missingThreatIds.length > 0) {
-      const missingThreatNames = assetThreats
-        .filter(t => missingThreatIds.includes(t.id))
-        .map(t => `${t.name} (ID: ${t.id})`)
-        .join(', ');
-      throw new Error(`Missing threats for asset ${request.assetId}. Please include all threats: ${missingThreatNames}`);
-    }
 
     if (invalidThreatIds.length > 0) {
       throw new Error(`Invalid threat IDs for asset ${request.assetId}: ${invalidThreatIds.join(', ')}. Valid threat IDs are: ${validThreatIds.join(', ')}`);
-    }
-
-    // Validate all threat IDs in the request (redundant check but kept for safety)
-    for (const threatAnswer of request.threats) {
-      if (!validThreatIds.includes(threatAnswer.threatId)) {
-        throw new Error(`Threat ID ${threatAnswer.threatId} not found for asset ${request.assetId}`);
-      }
     }
 
     const results = [];
@@ -305,6 +289,41 @@ export class UMKMSurveyService implements IUMKMSurveyService {
         understandLevel as UnderstandLevel
       );
 
+      // Save feedback if user doesn't understand
+      if (!request.mengerti_poin) {
+        // Save feedback for "mengerti_poin" field
+        await this.submissionRepository.createFeedback(
+          submissionId,
+          'mengerti_poin',
+          request.mengerti_poin ? 'Mengerti' : 'Tidak Mengerti'
+        );
+
+        // Save feedback for "Tidak_mengerti_poin" if provided
+        if (request.Tidak_mengerti_poin) {
+          await this.submissionRepository.createFeedback(
+            submissionId,
+            'Tidak_mengerti_poin',
+            request.Tidak_mengerti_poin
+          );
+        }
+
+        // Save feedback for "description_tidak_mengerti" if provided
+        if (request.description_tidak_mengerti) {
+          await this.submissionRepository.createFeedback(
+            submissionId,
+            'description_tidak_mengerti',
+            request.description_tidak_mengerti
+          );
+        }
+      } else {
+        // Save feedback for "mengerti_poin" field when user understands
+        await this.submissionRepository.createFeedback(
+          submissionId,
+          'mengerti_poin',
+          'Mengerti'
+        );
+      }
+
       // Update form progress to submitted
       await this.formProgressRepository.updateProgress(
         userId,
@@ -324,7 +343,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       };
 
     } catch (error) {
-      if (error instanceof RiskValidationError) {
+      // Re-throw validation errors as-is
+      if (error instanceof InvalidRiskInputError) {
         throw error;
       }
       throw new Error(`Failed to submit inputs: ${error instanceof Error ? error.message : 'Unknown error'}`);
