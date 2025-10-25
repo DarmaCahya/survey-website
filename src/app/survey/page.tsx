@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { questions } from '@/data/question';
 import QuestionFields from '@/components/Survey/questionFields';
 import { toast } from 'sonner';
+import { useGetAllForms } from '@/hooks/forms/useGetAllForms';
 
 export default function Survey() {
+    const {forms, loading, error} = useGetAllForms();
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
       
