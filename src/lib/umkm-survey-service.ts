@@ -20,7 +20,6 @@ import {
   AssetResponse,
   ThreatResponse,
   UMKMProgressResponse,
-  RiskValidationError,
   FormStatus,
   UnderstandLevel,
   RiskCategory

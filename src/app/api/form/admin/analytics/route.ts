@@ -1,19 +1,11 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/database';
-import { jwtService } from '@/lib/jwt';
-import { AuthService } from '@/lib/auth-service';
-import { UserRepository } from '@/lib/user-repository';
-import { passwordService } from '@/lib/password';
 import { withAdminPin } from '@/lib/admin-pin-service';
 import { 
   handleApiError, 
-  createSuccessResponse,
-  createAuthErrorResponse
+  createSuccessResponse
 } from '@/lib/error-handler';
-
-// Initialize services
-const userRepository = new UserRepository(db);
-const authService = new AuthService(userRepository, passwordService, jwtService);
+import { Prisma } from '@prisma/client';
 
 /**
  * Get comprehensive analytics including user feedback
@@ -31,11 +23,11 @@ async function getAnalytics(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     // Build where clause for submissions
-    const whereClause: any = {};
+    const whereClause: Prisma.SubmissionWhereInput = {};
     
     if (assetId) whereClause.assetId = parseInt(assetId);
     if (threatId) whereClause.threatId = parseInt(threatId);
-    if (understandLevel) whereClause.understand = understandLevel;
+    if (understandLevel) whereClause.understand = understandLevel as 'MENGERTI' | 'TIDAK_MENGERTI';
     if (userId) whereClause.userId = parseInt(userId);
 
     // Get submissions with all related data
@@ -104,11 +96,31 @@ async function getAnalytics(request: NextRequest) {
       HIGH: filteredSubmissions.filter(s => s.score?.category === 'HIGH').length
     };
 
+    interface RecentFeedbackItem {
+      id: number;
+      field: string;
+      message: string;
+      createdAt: Date;
+      user: {
+        id: number;
+        email: string;
+        name: string | null;
+      };
+      asset: {
+        id: number;
+        name: string;
+      };
+      threat: {
+        id: number;
+        name: string;
+      };
+    }
+
     // Get feedback statistics
     const feedbackStats = {
       totalFeedback: filteredSubmissions.reduce((sum, s) => sum + s.feedback.length, 0),
       feedbackByField: {} as Record<string, number>,
-      recentFeedback: [] as any[]
+      recentFeedback: [] as RecentFeedbackItem[]
     };
 
     // Analyze feedback by field

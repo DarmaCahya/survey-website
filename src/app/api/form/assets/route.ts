@@ -4,9 +4,6 @@ import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
-import { AssetRepository, SubmissionRepository, ThreatRepository, FormProgressRepository, AdminRepository } from '@/lib/repositories';
-import { UMKMSurveyService } from '@/lib/umkm-survey-service';
-import { riskCalculationService } from '@/lib/risk-calculation';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -16,20 +13,6 @@ import {
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
-const assetRepository = new AssetRepository();
-const submissionRepository = new SubmissionRepository();
-const threatRepository = new ThreatRepository();
-const formProgressRepository = new FormProgressRepository();
-const adminRepository = new AdminRepository();
-
-const umkmSurveyService = new UMKMSurveyService(
-  assetRepository,
-  threatRepository,
-  submissionRepository,
-  formProgressRepository,
-  adminRepository,
-  riskCalculationService
-);
 
 /**
  * Get all assets with threat counts, descriptions, and user progress status

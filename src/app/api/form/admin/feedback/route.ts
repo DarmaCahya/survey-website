@@ -1,19 +1,11 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/database';
-import { jwtService } from '@/lib/jwt';
-import { AuthService } from '@/lib/auth-service';
-import { UserRepository } from '@/lib/user-repository';
-import { passwordService } from '@/lib/password';
 import { withAdminPin } from '@/lib/admin-pin-service';
 import { 
   handleApiError, 
-  createSuccessResponse,
-  createAuthErrorResponse
+  createSuccessResponse
 } from '@/lib/error-handler';
-
-// Initialize services
-const userRepository = new UserRepository(db);
-const authService = new AuthService(userRepository, passwordService, jwtService);
+import { Prisma } from '@prisma/client';
 
 /**
  * Get user feedback analytics
@@ -31,7 +23,7 @@ async function getFeedbackAnalytics(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
 
     // Build where clause for feedback
-    const whereClause: any = {};
+    const whereClause: Prisma.FeedbackWhereInput = {};
     
     if (field) whereClause.field = field;
 

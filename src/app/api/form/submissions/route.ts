@@ -20,6 +20,7 @@ import {
   validateRequestBody 
 } from '@/lib/error-handler';
 import { CreateSubmissionRequest, BatchSubmissionRequest } from '@/types/risk';
+import { Prisma } from '@prisma/client';
 
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
@@ -70,10 +71,10 @@ export async function GET(request: NextRequest) {
     const includeFeedback = searchParams.get('includeFeedback') === 'true';
 
     // Build where clause
-    const whereClause: any = { userId: user.id };
+    const whereClause: Prisma.SubmissionWhereInput = { userId: user.id };
     if (assetId) whereClause.assetId = parseInt(assetId);
     if (threatId) whereClause.threatId = parseInt(threatId);
-    if (understandLevel) whereClause.understand = understandLevel;
+    if (understandLevel) whereClause.understand = understandLevel as 'MENGERTI' | 'TIDAK_MENGERTI';
 
     // Get submissions with all related data
     const submissions = await db.submission.findMany({

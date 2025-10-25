@@ -68,7 +68,7 @@ NEXT_TELEMETRY_DISABLED=1
 PORT=3000
 HOSTNAME=0.0.0.0
 EOF
-
+            
 # Create cleanup script
 echo "🧹 Creating cleanup script..."
 cat > cleanup.sh << 'EOF'
