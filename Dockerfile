@@ -10,7 +10,7 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm ci --only=production --ignore-scripts
+RUN npm ci --ignore-scripts --timeout=300000 --retry=3 --retry-delay=1000
 
 # Rebuild the source code only when needed
 FROM base AS builder
