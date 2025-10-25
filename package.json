@@ -7,7 +7,14 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "docker:start": "./docker.sh start",
+    "docker:stop": "./docker.sh stop",
+    "docker:restart": "./docker.sh restart",
+    "docker:logs": "./docker.sh logs",
+    "docker:migrate": "./docker.sh migrate",
+    "docker:seed": "./docker.sh seed",
+    "docker:clean": "./docker.sh clean"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
