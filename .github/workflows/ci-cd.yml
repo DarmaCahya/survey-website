@@ -106,28 +106,72 @@ jobs:
         password: ${{ secrets.VPS_PASSWORD }}
         port: 22
         script: |
-          # Navigate to project directory
-          cd /var/www/survey-web || { echo "Directory not found, creating..."; sudo mkdir -p /var/www/survey-web; sudo chown ubuntu:ubuntu /var/www/survey-web; cd /var/www/survey-web; }
+          #!/bin/bash
+          set -e
           
-          # Pull latest code
-          git pull origin main
+          echo "=== Starting Deployment ==="
+          
+          # Check if Docker is installed
+          if ! command -v docker &> /dev/null; then
+            echo "Docker not found. Please install Docker first."
+            echo "Run: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+            exit 1
+          fi
+          
+          # Setup project directory
+          PROJECT_DIR="/var/www/survey-web"
+          if [ ! -d "$PROJECT_DIR" ]; then
+            echo "Creating project directory..."
+            sudo mkdir -p "$PROJECT_DIR"
+            sudo chown $USER:$USER "$PROJECT_DIR"
+          fi
+          
+          cd "$PROJECT_DIR"
+          
+          # Clone or pull repository
+          if [ ! -d ".git" ]; then
+            echo "Cloning repository..."
+            git clone https://github.com/${{ github.repository }}.git .
+          else
+            echo "Pulling latest changes..."
+            git pull origin main
+          fi
+          
+          # Login to GitHub Container Registry
+          echo "Logging in to GitHub Container Registry..."
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Stop existing containers
+          echo "Stopping existing containers..."
           docker compose down || true
           
-          # Pull latest Docker image
+          # Pull latest image
+          echo "Pulling latest Docker image..."
           docker compose pull
           
           # Start services
+          echo "Starting services..."
           docker compose up -d
           
-          # Wait for services to be healthy
-          sleep 30
+          # Wait for services
+          echo "Waiting for services to start..."
+          sleep 10
           
-          # Health check
-          curl -f http://localhost:3000/api/health || exit 1
+          # Health check with retry
+          echo "Running health check..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/api/health &> /dev/null; then
+              echo "✅ Health check passed!"
+              echo "=== Deployment completed successfully! ==="
+              exit 0
+            fi
+            echo "Waiting for service to be ready... ($i/30)"
+            sleep 2
+          done
           
-          echo "Deployment completed successfully!"
+          echo "❌ Health check failed after 60 seconds"
+          docker compose logs --tail=50
+          exit 1
 
   # Cleanup Job
   cleanup:
