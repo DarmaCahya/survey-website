@@ -21,7 +21,8 @@ import {
   UMKMProgressResponse,
   RiskValidationError,
   FormStatus,
-  UnderstandLevel
+  UnderstandLevel,
+  RiskCategory
 } from '@/types/risk';
 
 /**
@@ -221,7 +222,7 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       await this.formProgressRepository.updateProgress(
         userId, 
         request.assetId, 
-        FormStatus.COMPLETED
+        FormStatus.SUBMITTED
       );
     } else {
       // Update to in_progress if some submissions were successful
@@ -301,7 +302,7 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       // Update understanding level
       await this.submissionRepository.updateUnderstand(
         submissionId,
-        understandLevel
+        understandLevel as UnderstandLevel
       );
 
       // Update form progress to submitted
@@ -316,7 +317,10 @@ export class UMKMSurveyService implements IUMKMSurveyService {
         impact: scoreWithContext.impact,
         total: scoreWithContext.total,
         category: scoreWithContext.category,
-        threatDescription: scoreWithContext.threatDescription
+        threatDescription: {
+          ...scoreWithContext.threatDescription,
+          category: scoreWithContext.category as RiskCategory
+        }
       };
 
     } catch (error) {
@@ -348,8 +352,15 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       peluang: submission.score.peluang,
       impact: submission.score.impact,
       total: submission.score.total,
-      category: submission.score.category,
-      threatDescription: submission.score.threatDescription
+      category: submission.score.category as RiskCategory,
+      threatDescription: submission.score.threatDescription as {
+        category: RiskCategory;
+        threatName: string;
+        description: string;
+        recommendations: string[];
+        priority: 'LOW' | 'MEDIUM' | 'HIGH';
+        actionRequired: boolean;
+      } | undefined
     };
   }
 

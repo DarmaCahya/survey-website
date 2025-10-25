@@ -36,7 +36,7 @@ export class JwtService implements IJwtService {
         expiresIn: this.expiresIn,
         issuer: 'survey-website',
         audience: 'survey-website-users',
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       throw new Error(`Token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -104,7 +104,7 @@ export class JwtService implements IJwtService {
 
       const currentTime = Math.floor(Date.now() / 1000);
       return decoded.exp < currentTime;
-    } catch (error) {
+    } catch {
       return true;
     }
   }
@@ -127,7 +127,7 @@ export class JwtService implements IJwtService {
         expiresIn: this.refreshExpiresIn,
         issuer: 'survey-website',
         audience: 'survey-website-users',
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       throw new Error(`Refresh token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

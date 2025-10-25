@@ -1,6 +1,4 @@
-import { NextRequest } from 'next/server';
-import { db } from '@/lib/database';
-import { AssetRepository } from '@/lib/repositories';
+import { AssetRepository, SubmissionRepository, ThreatRepository, FormProgressRepository, AdminRepository } from '@/lib/repositories';
 import { UMKMSurveyService } from '@/lib/umkm-survey-service';
 import { riskCalculationService } from '@/lib/risk-calculation';
 import { 
@@ -10,11 +8,17 @@ import {
 
 // Initialize services with dependency injection
 const assetRepository = new AssetRepository();
+const submissionRepository = new SubmissionRepository();
+const threatRepository = new ThreatRepository();
+const formProgressRepository = new FormProgressRepository();
+const adminRepository = new AdminRepository();
+
 const umkmSurveyService = new UMKMSurveyService(
   assetRepository,
-  {} as any, // Will be injected properly in other endpoints
-  {} as any,
-  {} as any,
+  threatRepository,
+  submissionRepository,
+  formProgressRepository,
+  adminRepository,
   riskCalculationService
 );
 
@@ -22,7 +26,7 @@ const umkmSurveyService = new UMKMSurveyService(
  * Get all assets with threat counts
  * GET /api/form/assets
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const assets = await umkmSurveyService.getAssets();
     return createSuccessResponse(assets, 'Assets retrieved successfully');

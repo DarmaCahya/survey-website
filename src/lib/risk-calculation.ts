@@ -1,4 +1,4 @@
-import { RiskInput, RiskScore, RiskCategory, RiskValidationError, InvalidRiskInputError } from '@/types/risk';
+import { RiskInput, RiskScore, RiskCategory, InvalidRiskInputError } from '@/types/risk';
 import { ThreatDescriptionService, ThreatSpecificDescription } from './threat-description-service';
 
 /**

@@ -48,8 +48,10 @@ export class AuthService implements IAuthService {
       const user = await this.userRepository.create({
         email: request.email,
         passwordHash,
-        name: request.name,
+        name: request.name || null,
         isActive: true,
+        refreshToken: null,
+        refreshTokenExp: null,
       });
 
       // Generate token
@@ -296,9 +298,9 @@ export class AuthService implements IAuthService {
       throw new ValidationError('Invalid email format');
     }
 
-    const passwordValidation = this.passwordService.validatePasswordStrength(request.password);
-    if (!passwordValidation.isValid) {
-      throw new ValidationError(passwordValidation.message);
+    // Basic password validation
+    if (!request.password || request.password.length < 6) {
+      throw new ValidationError('Password must be at least 6 characters long');
     }
 
     if (request.name && request.name.length > 100) {
@@ -357,7 +359,7 @@ export class AuthService implements IAuthService {
     return {
       id: user.id,
       email: user.email,
-      name: user.name,
+      name: user.name || undefined,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

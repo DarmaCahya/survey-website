@@ -73,7 +73,12 @@ export function protectRoute(
   handler: (request: NextRequest, user: AuthUser) => Promise<NextResponse>,
   options: { required: boolean } = { required: true }
 ) {
-  return withAuth(handler, options);
+  return withAuth(async (request: NextRequest, user: AuthUser | null) => {
+    if (!user) {
+      return createAuthErrorResponse('Authentication required');
+    }
+    return handler(request, user);
+  }, options);
 }
 
 /**
@@ -88,7 +93,7 @@ export function getUserFromRequest(request: NextRequest): AuthUser | null {
 /**
  * Check if user has required permissions
  * @param user - AuthUser object
- * @param _permission - Required permission (currently unused)
+ * @param permission - Required permission (currently unused)
  * @returns True if user has permission
  */
 export function hasPermission(user: AuthUser, _permission: string): boolean {

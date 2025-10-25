@@ -42,7 +42,7 @@ export class AdminPinService implements IAdminPinService {
  * Admin PIN middleware
  * Protects admin routes with PIN authentication
  */
-export function withAdminPin<T extends any[]>(
+export function withAdminPin<T extends unknown[]>(
   handler: (request: NextRequest, ...args: T) => Promise<Response>
 ) {
   return async (request: NextRequest, ...args: T): Promise<Response> => {
@@ -51,11 +51,11 @@ export function withAdminPin<T extends any[]>(
     const pin = pinService.extractPinFromRequest(request);
     
     if (!pin) {
-      return createAuthErrorResponse('Admin PIN is required', 401);
+      return createAuthErrorResponse('Admin PIN is required');
     }
 
     if (!pinService.validatePin(pin)) {
-      return createAuthErrorResponse('Invalid admin PIN', 401);
+      return createAuthErrorResponse('Invalid admin PIN');
     }
 
     return handler(request, ...args);

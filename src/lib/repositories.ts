@@ -7,6 +7,26 @@ import {
   UnderstandLevel,
   RiskCategory
 } from '@/types/risk';
+import { Submission, RiskInput, Score } from '@prisma/client';
+
+// Type for submission with related data
+export type SubmissionWithRelations = Submission & {
+  riskInput: RiskInput | null;
+  score: Score | null;
+  user: {
+    id: number;
+    email: string;
+    name: string | null;
+  };
+  asset: {
+    id: number;
+    name: string;
+  };
+  threat: {
+    id: number;
+    name: string;
+  };
+};
 
 /**
  * Asset repository interface following Dependency Inversion Principle
@@ -29,10 +49,10 @@ export interface IThreatRepository {
  */
 export interface ISubmissionRepository {
   create(userId: number, assetId: number, threatId: number): Promise<number>;
-  findById(id: number): Promise<any | null>;
-  findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<any | null>;
+  findById(id: number): Promise<SubmissionWithRelations | null>;
+  findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<SubmissionWithRelations | null>;
   updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void>;
-  updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: any): Promise<void>;
+  updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: unknown): Promise<void>;
   updateUnderstand(submissionId: number, understand: UnderstandLevel): Promise<void>;
 }
 
@@ -141,7 +161,7 @@ export class SubmissionRepository implements ISubmissionRepository {
     return submission.id;
   }
 
-  async findById(id: number): Promise<any | null> {
+  async findById(id: number): Promise<SubmissionWithRelations | null> {
     return await db.submission.findUnique({
       where: { id },
       include: {
@@ -170,7 +190,7 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
-  async findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<any | null> {
+  async findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<SubmissionWithRelations | null> {
     return await db.submission.findFirst({
       where: {
         userId,
@@ -222,7 +242,7 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
-  async updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: any): Promise<void> {
+  async updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: unknown): Promise<void> {
     await db.score.upsert({
       where: { submissionId },
       create: {
@@ -231,14 +251,14 @@ export class SubmissionRepository implements ISubmissionRepository {
         impact,
         total,
         category,
-        threatDescription: threatDescription || null
+        threatDescription: threatDescription || undefined
       },
       update: {
         peluang,
         impact,
         total,
         category,
-        threatDescription: threatDescription || null
+        threatDescription: threatDescription || undefined
       }
     });
   }
@@ -284,7 +304,7 @@ export class FormProgressRepository implements IFormProgressRepository {
       }
     });
 
-    return progress?.status || null;
+    return (progress?.status as FormStatus) || null;
   }
 }
 

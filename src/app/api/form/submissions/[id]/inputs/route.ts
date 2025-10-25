@@ -88,12 +88,13 @@ export async function POST(
       body = JSON.parse(rawBody);
     } catch (error) {
       console.error('JSON parsing error:', error);
-      return handleApiError(new Error(`Invalid JSON in request body: ${error.message}`), 'Invalid request body');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return handleApiError(new Error(`Invalid JSON in request body: ${errorMessage}`), 'Invalid request body');
     }
     validateRequestBody(body, ['biaya_pengetahuan', 'pengaruh_kerugian', 'Frekuensi_serangan', 'Pemulihan', 'mengerti_poin']);
 
     // Convert boolean mengerti_poin to UnderstandLevel enum
-    const understandLevel = body.mengerti_poin ? 'MENGERTI' : 'TIDAK_MENGERTI';
+    // const understandLevel = body.mengerti_poin ? 'MENGERTI' : 'TIDAK_MENGERTI';
 
     const inputsRequest: SubmitInputsRequest = {
       biaya_pengetahuan: body.biaya_pengetahuan,

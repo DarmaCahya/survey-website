@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server';
 import { 
   AssetRepository, 
   SubmissionRepository, 
+  ThreatRepository,
   FormProgressRepository,
   AdminRepository 
 } from '@/lib/repositories';
@@ -16,11 +16,13 @@ import {
 // Initialize services with dependency injection
 const assetRepository = new AssetRepository();
 const submissionRepository = new SubmissionRepository();
+const threatRepository = new ThreatRepository();
 const formProgressRepository = new FormProgressRepository();
 const adminRepository = new AdminRepository();
 
 const umkmSurveyService = new UMKMSurveyService(
   assetRepository,
+  threatRepository,
   submissionRepository,
   formProgressRepository,
   adminRepository,
@@ -32,7 +34,7 @@ const umkmSurveyService = new UMKMSurveyService(
  * GET /api/form/admin/umkm
  * Protected with admin PIN
  */
-async function getUMKMProgress(request: NextRequest) {
+async function getUMKMProgress() {
   try {
     const progress = await umkmSurveyService.getUMKMProgress();
     return createSuccessResponse(progress, 'UMKM progress retrieved successfully');

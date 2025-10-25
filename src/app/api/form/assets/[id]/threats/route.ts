@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { AssetRepository } from '@/lib/repositories';
+import { AssetRepository, ThreatRepository, SubmissionRepository, FormProgressRepository, AdminRepository } from '@/lib/repositories';
 import { UMKMSurveyService } from '@/lib/umkm-survey-service';
 import { riskCalculationService } from '@/lib/risk-calculation';
 import { 
@@ -9,11 +9,17 @@ import {
 
 // Initialize services with dependency injection
 const assetRepository = new AssetRepository();
+const threatRepository = new ThreatRepository();
+const submissionRepository = new SubmissionRepository();
+const formProgressRepository = new FormProgressRepository();
+const adminRepository = new AdminRepository();
+
 const umkmSurveyService = new UMKMSurveyService(
   assetRepository,
-  {} as any, // Will be injected properly in other endpoints
-  {} as any,
-  {} as any,
+  threatRepository,
+  submissionRepository,
+  formProgressRepository,
+  adminRepository,
   riskCalculationService
 );
 
@@ -23,10 +29,11 @@ const umkmSurveyService = new UMKMSurveyService(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const assetId = parseInt(params.id);
+    const resolvedParams = await params;
+    const assetId = parseInt(resolvedParams.id);
     
     if (isNaN(assetId)) {
       return handleApiError(new Error('Invalid asset ID'), 'Invalid asset ID');

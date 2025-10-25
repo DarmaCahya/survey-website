@@ -86,7 +86,7 @@ export class UserProgressService {
 
     // Calculate progress for each asset
     const assetProgress = assets.map(asset => {
-      const assetSubmissions = submissions.filter(sub => sub.assetId === asset.id);
+      // const assetSubmissions = submissions.filter(sub => sub.assetId === asset.id);
       
       const threats = asset.threats.map(threat => {
         const submissionKey = `${asset.id}-${threat.id}`;
@@ -95,7 +95,7 @@ export class UserProgressService {
         return {
           threatId: threat.id,
           threatName: threat.name,
-          status: submission?.completed ? 'COMPLETED' : 'NOT_STARTED',
+          status: submission?.completed ? 'COMPLETED' as const : 'NOT_STARTED' as const,
           submissionId: submission?.id
         };
       });
@@ -106,11 +106,11 @@ export class UserProgressService {
       // Determine asset status based on threat completion
       let assetStatus: 'COMPLETED' | 'IN_PROGRESS' | 'NOT_STARTED';
       if (completedThreats === 0) {
-        assetStatus = 'NOT_STARTED';
+        assetStatus = 'NOT_STARTED' as const;
       } else if (completedThreats === totalThreats) {
-        assetStatus = 'COMPLETED';
+        assetStatus = 'COMPLETED' as const;
       } else {
-        assetStatus = 'IN_PROGRESS';
+        assetStatus = 'IN_PROGRESS' as const;
       }
 
       return {
@@ -179,7 +179,7 @@ export class UserProgressService {
         return {
           userId: user.id,
           userEmail: user.email,
-          userName: user.name,
+          userName: user.name || 'Unknown',
           progress
         };
       })
