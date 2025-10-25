@@ -49,7 +49,7 @@ export interface ThreatAnswer {
   Frekuensi_serangan: number;
   Pemulihan: number;
   mengerti_poin: boolean;
-  Tidak_mengerti_poin?: string;
+    Tidak_mengerti_poin?: string;
   description_tidak_mengerti?: string;
 }
 
