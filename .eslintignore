@@ -1,0 +1,6 @@
+# GitHub Actions Workflow Files
+# These files are YAML configuration files for CI/CD
+
+# Ignore YAML linting for workflow files
+.github/workflows/*.yml
+.github/workflows/*.yaml

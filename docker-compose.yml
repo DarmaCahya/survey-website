@@ -1,0 +1,64 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: survey-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: survey_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - survey-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    container_name: survey-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/survey_database
+      JWT_SECRET: 8bee05d9f05b1d367ed47f9da766521c
+      ADMIN_PIN: 1234
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - survey-network
+    volumes:
+      - ./uploads:/app/uploads
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        echo 'Setting up database schema...' &&
+        npx prisma db push --accept-data-loss &&
+        echo 'Seeding database...' &&
+        npx prisma db seed &&
+        echo 'Starting application...' &&
+        npm run dev
+      "
+
+volumes:
+  postgres_data:
+
+networks:
+  survey-network:
+    driver: bridge
+
