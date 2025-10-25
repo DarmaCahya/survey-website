@@ -51,9 +51,11 @@ export interface ISubmissionRepository {
   create(userId: number, assetId: number, threatId: number): Promise<number>;
   findById(id: number): Promise<SubmissionWithRelations | null>;
   findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<SubmissionWithRelations | null>;
+  findByUserAndAsset(userId: number, assetId: number): Promise<SubmissionWithRelations[]>;
   updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void>;
   updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: unknown): Promise<void>;
   updateUnderstand(submissionId: number, understand: UnderstandLevel): Promise<void>;
+  createFeedback(submissionId: number, field: string, message: string): Promise<void>;
 }
 
 /**
@@ -223,6 +225,41 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
+  async findByUserAndAsset(userId: number, assetId: number): Promise<SubmissionWithRelations[]> {
+    return await db.submission.findMany({
+      where: {
+        userId,
+        assetId
+      },
+      include: {
+        riskInput: true,
+        score: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        asset: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        threat: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        submittedAt: 'desc'
+      }
+    });
+  }
+
   async updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void> {
     await db.riskInput.upsert({
       where: { submissionId },
@@ -267,6 +304,16 @@ export class SubmissionRepository implements ISubmissionRepository {
     await db.submission.update({
       where: { id: submissionId },
       data: { understand }
+    });
+  }
+
+  async createFeedback(submissionId: number, field: string, message: string): Promise<void> {
+    await db.feedback.create({
+      data: {
+        submissionId,
+        field,
+        message
+      }
     });
   }
 }

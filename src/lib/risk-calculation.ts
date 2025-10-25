@@ -1,4 +1,5 @@
-import { RiskInput, RiskScore, RiskCategory, InvalidRiskInputError } from '@/types/risk';
+import { RiskInput, RiskScore, RiskCategory } from '@/types/risk';
+import { InvalidRiskInputError } from '@/lib/custom-errors';
 import { ThreatDescriptionService, ThreatSpecificDescription } from './threat-description-service';
 
 /**
@@ -83,24 +84,52 @@ export class RiskCalculationService implements IRiskCalculationService {
    * @throws RiskValidationError if validation fails
    */
   validateInput(input: RiskInput): void {
-    // Validate F (Peluang Serangan): 1-6
+    // Field mapping for better error messages
+    const fieldMapping = {
+      f: { name: 'biaya_pengetahuan', description: 'Biaya Pengetahuan' },
+      g: { name: 'pengaruh_kerugian', description: 'Pengaruh Kerugian' },
+      h: { name: 'Frekuensi_serangan', description: 'Frekuensi Serangan' },
+      i: { name: 'Pemulihan', description: 'Pemulihan' }
+    };
+
+    // Validate F (Biaya Pengetahuan): 1-6
     if (!Number.isInteger(input.f) || input.f < 1 || input.f > 6) {
-      throw new InvalidRiskInputError('f', input.f, '1-6');
+      throw new InvalidRiskInputError(
+        fieldMapping.f.name, 
+        input.f, 
+        '1-6',
+        fieldMapping.f.description
+      );
     }
 
-    // Validate G (Impact): 1-6
+    // Validate G (Pengaruh Kerugian): 1-6
     if (!Number.isInteger(input.g) || input.g < 1 || input.g > 6) {
-      throw new InvalidRiskInputError('g', input.g, '1-6');
+      throw new InvalidRiskInputError(
+        fieldMapping.g.name, 
+        input.g, 
+        '1-6',
+        fieldMapping.g.description
+      );
     }
 
-    // Validate H (Total Resiko): 1-6
+    // Validate H (Frekuensi Serangan): 1-6
     if (!Number.isInteger(input.h) || input.h < 1 || input.h > 6) {
-      throw new InvalidRiskInputError('h', input.h, '1-6');
+      throw new InvalidRiskInputError(
+        fieldMapping.h.name, 
+        input.h, 
+        '1-6',
+        fieldMapping.h.description
+      );
     }
 
-    // Validate I (Kategori Risiko): 2, 4, or 6
+    // Validate I (Pemulihan): 2, 4, or 6
     if (!Number.isInteger(input.i) || ![2, 4, 6].includes(input.i)) {
-      throw new InvalidRiskInputError('i', input.i, '2, 4, or 6');
+      throw new InvalidRiskInputError(
+        fieldMapping.i.name, 
+        input.i, 
+        '2, 4, or 6',
+        fieldMapping.i.description
+      );
     }
   }
 
