@@ -8,7 +8,6 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function Dashboard() {
     const { forms, loading, error } = useGetAllForms();
-    console.log(forms);
     
     return (
         <div className="flex min-h-screen items-center justify-center bg-white">
@@ -86,14 +85,16 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                <Link href={`/dashboard/form/${item.id}`}>
-                                    <Button 
+                                <Link
+                                    href={`/dashboard/form/${item.id}`}
+                                >
+                                    <Button
                                         className={`mt-6 text-white text-sm md:text-base py-2 transition-all duration-300 ${
-                                            isSelesai
-                                                ? "bg-green-600 hover:bg-green-700"
-                                                : isProses
-                                                ? "bg-yellow-500 hover:bg-yellow-600"
-                                                : "bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90"
+                                        isSelesai
+                                            ? "bg-green-600 hover:bg-green-700"
+                                            : isProses
+                                            ? "bg-yellow-500 hover:bg-yellow-600"
+                                            : "bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90"
                                         }`}
                                     >
                                         {isSelesai ? "Lihat Hasil" : isProses ? "Lanjutkan" : "Isi Form"}

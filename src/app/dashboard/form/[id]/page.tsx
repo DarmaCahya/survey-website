@@ -13,6 +13,8 @@ import { ArrowLeft } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { makeSubmission } from "@/services/FormService";
 import toast from 'react-hot-toast';
+import RiskModal from "@/components/form/RiskModal";
+import RiskSummary from "@/components/form/RiskSummary";
 
 export default function SurveyPage() {
     const params = useParams();
@@ -23,8 +25,10 @@ export default function SurveyPage() {
     const [threatIds, setThreatIds] = useState<string[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
+    const [isModalOpen, setIsModalOpen] = useState(false); 
 
     const { Threats, loading, error } = useThreatsByFormId(id);
+    const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
 
     useEffect(() => {
         if (!loading && Threats && Array.isArray(Threats.threats)) {
@@ -65,10 +69,12 @@ export default function SurveyPage() {
             };
 
             makeSubmission(payload)
-            .then(() => toast.success("Survey selesai! Data berhasil dikirim."))
+            .then(() => {
+                toast.success("Survey selesai! Data berhasil dikirim.");
+                setIsModalOpen(true);
+            })
             .catch(() => toast.error("Gagal mengirim survey."));
         }
-
     };
 
     const handleBack = () => {
@@ -123,18 +129,22 @@ export default function SurveyPage() {
                     {Threats?.asset?.description}
                 </p>
             </div>
-
-            <QuestionForm
-                key={topic} 
-                description={description[currentIndex]}                 
-                topic={topic}
-                questions={questions}
-                initialAnswers={allAnswers[topic]}
-                onSubmit={handleTopicSubmit}
-                onBack={handleBack}
-                isFirst={currentIndex === 0}
-                isLast={currentIndex === topics.length - 1}
-            />
+            
+            {completedForm && Threats?.threats.length > 0 ? (
+                <RiskSummary submissions={Threats.threats.map(t => t.submission)} />
+            ) : (
+                <QuestionForm
+                    key={topic} 
+                    description={description[currentIndex]}                 
+                    topic={topic}
+                    questions={questions}
+                    initialAnswers={allAnswers[topic]}
+                    onSubmit={handleTopicSubmit}
+                    onBack={handleBack}
+                    isFirst={currentIndex === 0}
+                    isLast={currentIndex === topics.length - 1}
+                />
+            )}
         </div>
     );
 }

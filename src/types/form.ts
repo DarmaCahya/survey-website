@@ -51,6 +51,8 @@ export type Threat = {
     id: string; 
     name: string; 
     description?: string; 
+    status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+    submission: SubmissionDescription;
 }
 
 export type ThreatResponse = {
@@ -133,3 +135,19 @@ export type SubmissionDetail = {
     };
     feedback: any[];
 };
+
+export interface SubmissionDescription {
+    submissionId: number;
+    score: {
+        peluang: number;
+        impact: number;
+        total: number;
+        category: string;
+    };
+    threatDescription: {
+        threatName: string;
+        description: string;
+        recommendations: string[];
+        category: string;
+    };
+}
