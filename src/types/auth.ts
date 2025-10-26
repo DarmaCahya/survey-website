@@ -14,7 +14,7 @@ export interface AuthUser {
 export interface RegisterRequest {
   email: string;
   password: string;
-  name?: string;
+  name: string;
 }
 
 export interface LoginRequest {
