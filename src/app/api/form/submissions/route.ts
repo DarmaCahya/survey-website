@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
@@ -281,6 +281,38 @@ export async function POST(request: NextRequest) {
       };
 
       const result = await umkmSurveyService.createBatchSubmission(user.id, batchRequest);
+      
+      const allFailed = result.submissions.every(r => !r.success);
+      
+      if (allFailed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'All submissions failed',
+            code: 'BATCH_SUBMISSION_FAILED',
+            message: 'All batch submissions failed',
+            data: result
+          },
+          { status: 400 }
+        );
+      }
+      
+      const hasFailures = result.submissions.some(r => !r.success);
+      
+      if (hasFailures) {
+        return NextResponse.json(
+          {
+            success: true,
+            data: result,
+            message: 'Batch submissions completed with some failures',
+            warnings: result.submissions.filter(r => !r.success).map(r => ({
+              threatId: r.threatId,
+              error: r.error
+            }))
+          }
+        );
+      }
+      
       return createSuccessResponse(result, 'Batch submissions created successfully');
     } else {
       // Single submission (backward compatibility)
