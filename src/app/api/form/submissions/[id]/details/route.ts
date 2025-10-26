@@ -40,6 +40,12 @@ export async function GET(
       return createAuthErrorResponse('Invalid or expired token');
     }
 
+    // Ensure user.id is valid and properly typed
+    if (!user.id || typeof user.id !== 'number' || user.id <= 0) {
+      console.error('Invalid user ID:', user.id);
+      return createAuthErrorResponse('Invalid user ID');
+    }
+
     // Await params for Next.js 15 compatibility
     const resolvedParams = await params;
     
