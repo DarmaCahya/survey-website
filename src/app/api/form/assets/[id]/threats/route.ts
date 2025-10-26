@@ -101,15 +101,10 @@ export async function GET(
       } else {
         status = 'COMPLETED';
         
-        let threatDescription = null;
-        if (submission.score.threatDescription && typeof submission.score.threatDescription === 'object') {
-          threatDescription = submission.score.threatDescription as any;
-        } else {
-          threatDescription = threatDescriptionService.generateThreatDescription(
-            threat.name,
-            submission.score.category
-          );
-        }
+        const threatDescription = threatDescriptionService.generateThreatDescription(
+          threat.name,
+          submission.score.category
+        );
         
         submissionData = {
           submissionId: submission.id,
