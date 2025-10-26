@@ -153,11 +153,35 @@ export class UMKMSurveyService implements IUMKMSurveyService {
         );
         
         if (existingSubmission) {
+          if (!existingSubmission.score) {
+            const submissionId = existingSubmission.id;
+            
+            const inputsRequest: SubmitInputsRequest = {
+              biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
+              pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
+              Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
+              Pemulihan: threatAnswer.Pemulihan,
+              mengerti_poin: threatAnswer.mengerti_poin,
+              Tidak_mengerti_poin: threatAnswer.Tidak_mengerti_poin,
+              description_tidak_mengerti: threatAnswer.description_tidak_mengerti
+            };
+
+            const result = await this.submitInputs(userId, submissionId, inputsRequest);
+
+            results.push({
+              threatId: threatAnswer.threatId,
+              submissionId: submissionId,
+              success: true,
+              result: result
+            });
+            continue;
+          }
+          
           results.push({
             threatId: threatAnswer.threatId,
             submissionId: existingSubmission.id,
             success: false,
-            error: 'Submission already exists for this asset-threat combination'
+            error: 'Submission already completed for this asset-threat combination'
           });
           continue;
         }
@@ -241,9 +265,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       throw new Error('Unauthorized access to submission');
     }
 
-    // Check if inputs have already been submitted for this submission
-    if (submission.riskInput) {
-      throw new Error('Inputs have already been submitted for this submission. Each submission can only be completed once.');
+    if (submission.score) {
+      throw new Error('This submission has already been completed with a score. Cannot resubmit.');
     }
 
     try {
