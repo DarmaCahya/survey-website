@@ -23,6 +23,7 @@ export default function RiskModal({ open, onClose, submissions }: RiskModalProps
     if (!submissions || submissions.length === 0) return null;
 
     const current = submissions[currentIndex];
+    console.log(current);
     const handlePrev = () => {
     setCurrentIndex(i => (i > 0 ? i - 1 : i));
     }

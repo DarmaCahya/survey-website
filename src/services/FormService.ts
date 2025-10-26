@@ -36,3 +36,14 @@ export const getResponses = async (id: string) => {
         return response.data;
     });
 };
+
+export const getAnalyticData = async (adminPin: string) => {
+    return safeRequest(async () => {
+        const response = await api.get("form/admin/analytics", {
+            headers: {
+                "x-admin-pin": adminPin,
+            },
+        });
+        return response.data;
+    });
+};

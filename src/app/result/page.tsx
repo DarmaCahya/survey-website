@@ -1,181 +1,94 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-// import Chart from "@/components/Result/chart";
 import { Input } from "@/components/ui/input";
-import { AnswerData, responsesData } from "@/types/survey";
+import { useMutation } from "@tanstack/react-query";
+import { getAnalyticDataByPin } from "@/services/AnalyticService";
+import { AnalyticResponse } from "@/types/analytics";
 
 export default function Result() {
-    const [authorized, setAuthorized] = useState(false);
-    const [password, setPassword] = useState(""); 
-    const [loading, setLoading] = useState(false);
-    const [responses, setResponses] = useState<responsesData[]>([]);
-    const [loadingData, setLoadingData] = useState(true);
+    const [adminPin, setAdminPin] = useState("");
+    const [analytics, setAnalytics] = useState<AnalyticResponse | null>(null);
+
+    const mutation = useMutation<AnalyticResponse, Error, string>({
+        mutationFn: getAnalyticDataByPin,
+        onSuccess: (data) => {
+        setAnalytics(data);
+        toast.success("Akses diterima 🎉");
+        },
+        onError: (err) => {
+        toast.error("PIN salah atau tidak memiliki akses ❌");
+        },
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-    
-        const correct = process.env.NEXT_PUBLIC_RESULT_PASS ?? "rahasia123";
-    
-        setTimeout(() => { 
-            if (password === correct) {
-                toast.success("Akses diterima 🎉");
-                setAuthorized(true);
-            } else {
-                toast.error("Password salah ❌, kamu tidak memiliki akses");
-                setPassword("");
-            }
-            setLoading(false);
-        }, 500);
-    };    
+        if (!adminPin) return toast.error("Harap isi PIN admin terlebih dahulu");
+        mutation.mutate(adminPin);
+    };
 
-    useEffect(() => {
-        if (!authorized) return;
-
-        const fetchResponses = async () => {
-            try {
-                const res = await fetch("/api/responses");
-                const data = await res.json();
-                if (data.success) {
-                    setResponses(data.data);
-                } else {
-                    toast.error("Gagal memuat data responden");
-                }
-            } catch (error) {
-                console.error(error);
-                toast.error("Terjadi kesalahan saat mengambil data");
-            } finally {
-                setLoadingData(false);
-            }
-        };
-
-        fetchResponses();
-    }, [authorized]);
-
-    if (!authorized) {
+    if (!analytics) {
         return (
-            <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-purple-50 to-white text-center px-4"
-            >
-                <div className="max-w-md w-full bg-white border border-gray-200 shadow-md rounded-xl p-8 space-y-6">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                        Masukkan Password
-                    </h1>
-                    <p className="text-gray-500">
-                        Halaman ini hanya dapat diakses oleh admin.
-                    </p>
-            
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <Input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Masukkan password"
-                            disabled={loading}
-                            className="w-full border-b-2 border-gray-300 focus:border-purple-500 p-2 text-gray-800"
-                        />
-            
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
-                            disabled={loading || password.length === 0}
-                        >
-                            Lanjutkan
-                        </Button>
-                    </form>
-            
-                    <Button asChild variant="ghost" className="text-gray-500 hover:text-black mt-4">
-                        <Link href="/">← Kembali ke Beranda</Link>
+        <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-purple-50 to-white text-center px-4"
+        >
+            <div className="max-w-md w-full bg-white border border-gray-200 shadow-md rounded-xl p-8 space-y-6">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                    Masukkan PIN Admin
+                </h1>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Input
+                        type="password"
+                        value={adminPin}
+                        onChange={(e) => setAdminPin(e.target.value)}
+                        placeholder="Masukkan PIN admin"
+                        disabled={mutation.isPending}
+                    />
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
+                        disabled={mutation.isPending || adminPin.length === 0} 
+                    >
+                    {mutation.isPending ? "Memeriksa..." : "Lanjutkan"}
                     </Button>
-                </div>
-            </motion.div>
+
+                </form>
+            </div>
+        </motion.div>
         );
-    }     
+    }
 
     return (
         <div className="min-h-screen py-12 px-4 bg-[#fbfbfc]">
-            <div className='max-w-5xl mx-auto'>
-                <Button 
-                    className='gap-4 mb-8'
-                    asChild
-                    variant="secondary"   
-                    size="lg" 
-                >
-                    <Link href="/">
-                        <ArrowLeft className="h-16 w-16 text-black" />
-                        Kembali
-                    </Link> 
-                </Button>
-
-                <div className='flex flex-col items-center text-center gap-4 mb-12'>
-                    <h1 className="font-bold text-5xl bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                        Hasil Kuesioner
-                    </h1>
+            <h1 className="font-bold text-5xl text-center mb-12 bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                Hasil Kuesioner
+            </h1>
+            <div className="max-w-5xl mx-auto bg-white border border-gray-200 shadow-md rounded-xl p-8">
+                <h2 className="text-2xl font-semibold mb-6 text-purple-600">Ringkasan</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                    <p className="text-4xl font-bold text-purple-600">{analytics.data.summary.totalSubmissions}</p>
+                    <p className="text-gray-600">Total Submissions</p>
                 </div>
-                
-                <div className="flex flex-col items-center justify-center gap-8">
-                    <div className="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-6">
-                        <p className="text-2xl text-black font-medium text-center pb-4">Daftar jawaban dari user</p>
-                        <ScrollArea className="h-[25rem]">
-                            {loadingData ? (
-                                <p className="text-center text-gray-500 py-10">Memuat data responden...</p>
-                            ) : responses.length === 0 ? (
-                                <p className="text-center text-gray-500 py-10">Belum ada responden 😢</p>
-                            ) : (
-                                <Accordion type="single" collapsible className="w-full space-y-2">
-                                    {responses.map((response, index) => (
-                                        <AccordionItem
-                                            key={index}
-                                            value={`response-${index}`}
-                                            className="border border-gray-200 rounded-lg shadow-sm bg-gray-50"
-                                        >
-                                            <AccordionTrigger className="px-4 py-3 text-left text-lg font-semibold text-gray-800 hover:bg-purple-50 rounded-lg transition">
-                                                {response.name}
-                                            </AccordionTrigger>
-                                            <AccordionContent className="px-4 py-4 space-y-3 bg-white rounded-b-lg">
-                                                <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Email:</span> {response.email}
-                                                </p>
-                                                <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Dikirim pada:</span> {new Date(response.createdAt).toLocaleString()}
-                                                </p>
-
-                                                <div className="pt-3 border-t border-gray-200 space-y-2">
-                                                    {Object.entries(response.answers || {}).map(([key, value]: [string, AnswerData]) => (
-                                                        <div key={key} className="p-3 rounded-md bg-gray-100">
-                                                            <p className="text-sm font-medium text-gray-800">{key}</p>
-                                                            <p className="text-sm text-gray-700">
-                                                                {Array.isArray(value) ? value.join(", ") : value.toString()}
-                                                            </p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            )}
-                        </ScrollArea>
-
-                        <p className="mt-4 text-center">
-                            Total Responden: {responses.length} user
-                        </p>
-                    </div>
+                <div>
+                    <p className="text-4xl font-bold text-purple-600">{analytics.data.summary.totalUsers}</p>
+                    <p className="text-gray-600">Total Users</p>
                 </div>
-
-                {/* <Chart /> */}
+                <div>
+                    <p className="text-4xl font-bold text-purple-600">{analytics.data.summary.totalAssets}</p>
+                    <p className="text-gray-600">Total Assets</p>
+                </div>
+                <div>
+                    <p className="text-4xl font-bold text-purple-600">{analytics.data.summary.totalThreats}</p>
+                    <p className="text-gray-600">Total Threats</p>
+                </div>
+                </div>
             </div>
         </div>
     );

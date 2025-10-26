@@ -26,6 +26,7 @@ export default function SurveyPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
     const [isModalOpen, setIsModalOpen] = useState(false); 
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { Threats, loading, error } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
@@ -41,7 +42,7 @@ export default function SurveyPage() {
         }
     }, [loading, Threats]);
 
-    const handleTopicSubmit = (data: Answers) => {
+    const handleTopicSubmit = async (data: Answers) => {
         const topic = topics[currentIndex];
         const updatedAnswers = { ...allAnswers, [topic]: data };
         setAllAnswers(updatedAnswers);
@@ -68,12 +69,18 @@ export default function SurveyPage() {
                 }),
             };
 
-            makeSubmission(payload)
-            .then(() => {
+            setIsSubmitting(true); 
+
+            try {
+                await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
                 setIsModalOpen(true);
-            })
-            .catch(() => toast.error("Gagal mengirim survey."));
+            } catch (err) {
+                toast.error("Gagal mengirim survey.");
+            } finally {
+                setIsSubmitting(false);
+            }
+
         }
     };
 
@@ -117,9 +124,12 @@ export default function SurveyPage() {
                     </Button>
                 </Link>
 
-                <span className="text-sm text-gray-600">
-                    Page {currentIndex + 1} dari {topics.length}
-                </span>
+                {!completedForm && (
+                    <span className="text-sm text-gray-600">
+                        Page {currentIndex + 1} dari {topics.length}
+                    </span>
+                )}
+
             </div>
             <div className="mb-2 mx-4">
                 <h2 className="text-2xl font-bold text-purple-600">
@@ -133,18 +143,35 @@ export default function SurveyPage() {
             {completedForm && Threats?.threats.length > 0 ? (
                 <RiskSummary submissions={Threats.threats.map(t => t.submission)} />
             ) : (
-                <QuestionForm
-                    key={topic} 
-                    description={description[currentIndex]}                 
-                    topic={topic}
-                    questions={questions}
-                    initialAnswers={allAnswers[topic]}
-                    onSubmit={handleTopicSubmit}
-                    onBack={handleBack}
-                    isFirst={currentIndex === 0}
-                    isLast={currentIndex === topics.length - 1}
+                <div className="relative">
+                    <QuestionForm
+                        key={topic}
+                        description={description[currentIndex]}
+                        topic={topic}
+                        questions={questions}
+                        initialAnswers={allAnswers[topic]}
+                        onSubmit={handleTopicSubmit}
+                        onBack={handleBack}
+                        isFirst={currentIndex === 0}
+                        isLast={currentIndex === topics.length - 1}
+                    />
+
+                    {isSubmitting && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-50">
+                            <Spinner className="w-12 h-12 text-purple-600" />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {isModalOpen && (
+                <RiskModal
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    submissions={Threats?.threats.map(t => t.submission) || []}
                 />
             )}
+
         </div>
     );
 }
