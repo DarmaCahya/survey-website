@@ -128,34 +128,34 @@ export class ThreatDescriptionService {
     const recommendations: Record<RiskCategory, Record<string, string[]>> = {
       LOW: {
         default: [
-          'Teruskan monitoring rutin terhadap ancaman ini',
-          'Pastikan sistem backup berjalan dengan baik',
-          'Lakukan update keamanan secara berkala'
+          'Lakukan monitoring rutin',
+          'Pastikan backup berjalan',
+          'Update sistem berkala'
         ],
         ddos: [
-          'Implementasikan rate limiting pada server',
-          'Gunakan CDN untuk distribusi traffic',
-          'Siapkan backup server untuk failover'
+          'Monitor traffic server',
+          'Siapkan backup server',
+          'Review konfigurasi server'
         ],
         phishing: [
-          'Lakukan pelatihan awareness keamanan untuk karyawan',
-          'Implementasikan email filtering yang ketat',
-          'Gunakan two-factor authentication'
+          'Edukasi karyawan',
+          'Filter email mencurigakan',
+          'Aktifkan 2FA'
         ],
         malware: [
-          'Pastikan antivirus selalu terupdate',
-          'Implementasikan application whitelisting',
-          'Lakukan scanning berkala pada sistem'
+          'Update antivirus',
+          'Scan sistem berkala',
+          'Backup data penting'
         ],
         brute_force: [
-          'Implementasikan account lockout policy',
-          'Gunakan password yang kuat dan unik',
-          'Aktifkan two-factor authentication'
+          'Gunakan password kuat',
+          'Aktifkan 2FA',
+          'Monitor akses mencurigakan'
         ],
         data_leakage: [
-          'Implementasikan data classification',
-          'Gunakan encryption untuk data sensitif',
-          'Lakukan audit akses data secara berkala'
+          'Backup data penting',
+          'Enkripsi data sensitif',
+          'Pantau akses data'
         ]
       },
       MEDIUM: {
@@ -198,46 +198,59 @@ export class ThreatDescriptionService {
       },
       HIGH: {
         default: [
-          'SEGERA implementasikan security controls yang ketat',
-          'Lakukan security assessment menyeluruh',
-          'Implementasikan continuous monitoring',
-          'Siapkan emergency response team',
-          'Pertimbangkan untuk menggunakan external security services'
+          '⚠️ SEGERA LAKUKAN AUDIT KEAMANAN MENYELURUH!',
+          'Implementasikan security monitoring 24/7 dengan alerting real-time',
+          'Bentuk tim emergency response yang siap siaga',
+          'Lakukan penetration testing profesional secepatnya',
+          'Engage dengan cybersecurity consultant untuk assessment mendalam',
+          'Document semua security incidents untuk compliance',
+          'Latih semua staf tentang incident response procedure'
         ],
         ddos: [
-          'SEGERA implementasikan enterprise-grade DDoS protection',
-          'Siapkan multiple data centers untuk redundancy',
-          'Implementasikan real-time traffic analysis',
-          'Siapkan emergency communication plan',
-          'Pertimbangkan untuk menggunakan cloud-based protection'
+          '🚨 URGENT: Deploy enterprise-grade DDoS protection service (Cloudflare/AWS Shield Pro)',
+          'Setup multiple data centers dengan load balancer untuk failover',
+          'Implementasikan real-time traffic analysis dan anomaly detection',
+          'Siapkan emergency communication plan untuk downtime scenarios',
+          'Engage dengan profesional IT untuk hardening infrastructure',
+          'Setup backup internet connection dari provider berbeda',
+          'Monitor network traffic patterns 24/7 dengan automated alerts'
         ],
         phishing: [
-          'SEGERA implementasikan advanced threat protection',
-          'Lakukan mandatory security training untuk semua karyawan',
-          'Implementasikan email authentication (SPF, DKIM, DMARC)',
-          'Siapkan rapid response team untuk phishing incidents',
-          'Pertimbangkan untuk menggunakan managed security services'
+          '🚨 URGENT: Deploy advanced email security solution (Mimecast/Proofpoint)',
+          'MANDATORY security training untuk SEMUA karyawan dengan quiz',
+          'Implementasikan DMARC policy dengan rejection untuk unverified senders',
+          'Setup SEGERA rapid response team dengan runbook untuk phishing incidents',
+          'Deploy URL filtering dan web proxy untuk blocking malicious sites',
+          'Implementasikan behavior analytics untuk detect email anomalies',
+          'Engage managed security services untuk 24/7 monitoring'
         ],
         malware: [
-          'SEGERA implementasikan comprehensive endpoint protection',
-          'Gunakan advanced threat intelligence',
-          'Implementasikan zero-trust network architecture',
-          'Siapkan malware incident response team',
-          'Pertimbangkan untuk menggunakan managed detection and response'
+          '🚨 URGENT: Deploy enterprise-grade endpoint protection (EDR/XDR solution)',
+          'Setup sandboxing environment untuk testing file mencurigakan',
+          'Implementasikan zero-trust network dengan micro-segmentation',
+          'Bentuk dedicated malware incident response team',
+          'Deploy threat intelligence feeds untuk proactive defense',
+          'Implementasikan application control whitelisting',
+          'Setup SIEM untuk correlation analysis dan threat hunting'
         ],
         brute_force: [
-          'SEGERA implementasikan multi-factor authentication wajib',
-          'Gunakan advanced authentication methods (biometric, hardware tokens)',
-          'Implementasikan real-time threat detection',
-          'Siapkan account security monitoring team',
-          'Pertimbangkan untuk menggunakan identity and access management solution'
+          '🚨 URGENT: WAJIBKAN multi-factor authentication untuk SEMUA akun',
+          'Implementasikan biometric authentication atau hardware security keys',
+          'Deploy AI-powered behavioral analytics untuk detect anomaly access',
+          'Setup IP whitelisting dan geofencing restrictions',
+          'Bentuk dedicated account security monitoring team',
+          'Implementasikan Identity and Access Management (IAM) solution',
+          'Setup automated account lockout dengan incident response workflow'
         ],
         data_leakage: [
-          'SEGERA implementasikan comprehensive data protection',
-          'Gunakan advanced data loss prevention tools',
-          'Implementasikan data encryption end-to-end',
-          'Siapkan data breach response team',
-          'Pertimbangkan untuk menggunakan data security consulting services'
+          '🚨 URGENT: Implementasikan Data Loss Prevention (DLP) enterprise-grade solution',
+          'Deploy end-to-end encryption untuk SEMUA data sensitif',
+          'Implementasikan data classification dan access controls berbasis role',
+          'Bentuk data breach response team dengan legal dan PR representatives',
+          'Setup data access monitoring dengan audit trails real-time',
+          'Engage cybersecurity consultant untuk data security assessment',
+          'Implementasikan data masking dan anonymization untuk testing environments',
+          'Setup continuous monitoring dengan automated alerts untuk unusual data access patterns'
         ]
       }
     };

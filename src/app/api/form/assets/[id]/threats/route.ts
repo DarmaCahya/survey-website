@@ -4,6 +4,7 @@ import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
+import { ThreatDescriptionService } from '@/lib/threat-description-service';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -13,6 +14,7 @@ import {
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
+const threatDescriptionService = new ThreatDescriptionService();
 
 /**
  * Get threats for a specific asset with user submission status
@@ -98,6 +100,17 @@ export async function GET(
         status = 'NOT_STARTED';
       } else {
         status = 'COMPLETED';
+        
+        let threatDescription = null;
+        if (submission.score.threatDescription && typeof submission.score.threatDescription === 'object') {
+          threatDescription = submission.score.threatDescription as any;
+        } else {
+          threatDescription = threatDescriptionService.generateThreatDescription(
+            threat.name,
+            submission.score.category
+          );
+        }
+        
         submissionData = {
           submissionId: submission.id,
           understand: submission.understand,
@@ -112,7 +125,8 @@ export async function GET(
             impact: submission.score.impact,
             total: submission.score.total,
             category: submission.score.category
-          }
+          },
+          threatDescription
         };
       }
 
