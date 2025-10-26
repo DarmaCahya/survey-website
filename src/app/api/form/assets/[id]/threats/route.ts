@@ -93,11 +93,13 @@ export async function GET(
     const threatsWithStatus = asset.threats.map(threat => {
       const submission = submissionsByThreat[threat.id];
       
-      let status: 'NOT_STARTED' | 'COMPLETED';
+      let status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
       let submissionData = null;
 
-      if (!submission || !submission.score) {
+      if (!submission) {
         status = 'NOT_STARTED';
+      } else if (!submission.score) {
+        status = 'IN_PROGRESS';
       } else {
         status = 'COMPLETED';
         
@@ -144,6 +146,7 @@ export async function GET(
       summary: {
         total: asset.threats.length,
         completed: threatsWithStatus.filter(t => t.status === 'COMPLETED').length,
+        inProgress: threatsWithStatus.filter(t => t.status === 'IN_PROGRESS').length,
         notStarted: threatsWithStatus.filter(t => t.status === 'NOT_STARTED').length
       }
     };

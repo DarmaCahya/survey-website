@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/survey_database
+      DATABASE_URL: postgresql://neondb_owner:npg_cSHZpUfm6oK5@ep-long-cherry-ad4gmuof-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
       JWT_SECRET: 8bee05d9f05b1d367ed47f9da766521c
       ADMIN_PIN: akanselesai2025
     ports:
