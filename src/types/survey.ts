@@ -1,3 +1,6 @@
+import { Control, FieldErrors, UseFormRegister } from "react-hook-form";
+import { Submission } from "@/types/form";
+
 type QuestionType = "short" | "long" | "radio" | "checkbox" | "email" | "dropdown" | "number" | "slider";
 
 export interface Question {
@@ -7,7 +10,12 @@ export interface Question {
     placeholder: string;
     required: boolean;
     options?: string[];
+    description?: string;
 }
+
+export type Answers = {
+  [questionId: string]: string | number;
+};
 
 export interface AnswerDetail {
     questionId: string;
@@ -27,6 +35,10 @@ export interface SurveyResponse {
 
 export interface QuestionFieldProps {
     question: Question;
+    index: number;
+    register: UseFormRegister<Submission>;
+    control: Control<Submission>;
+    errors?: FieldErrors<Submission>;
 }
 
 export interface AnswerData {
