@@ -32,5 +32,5 @@ export const threatSchema = yup.object({
 });
 
 export const submissionSchema = yup.object({
-    threats: yup.array().of(threatSchema).min(1, "Minimal harus ada satu ancaman"),
+    threats: yup.array().of(threatSchema).min(1, "Minimal harus ada satu ancaman").required("Threads wajib diisi"),
 });

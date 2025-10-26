@@ -9,7 +9,7 @@ export const useThreatsByFormId = (formId: string) => {
         queryKey: ["threats", formId],
         queryFn: async () => {
             const res = await getThreatByFormId(formId);
-            return res.data?.data ?? [];
+            return res.data ?? [];
         },
         enabled: !!formId,
         staleTime: 1000 * 60 * 5,

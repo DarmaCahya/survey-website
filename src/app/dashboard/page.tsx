@@ -4,9 +4,12 @@ import Link from "next/link";
 
 import { dataCategories } from "@/data/dataCategories"
 import { Button } from "@/components/ui/button"
+import { useGetAllForms } from "@/hooks/forms/useGetAllForms";
 
 export default function Dashboard() {
-
+    const { forms, loading, error } = useGetAllForms();
+    console.log(forms);
+    
     return (
         <div className="flex min-h-screen items-center justify-center bg-white">
             <div className="flex flex-col items-center justify-center gap-6 max-w-xs md:max-w-2xl xl:max-w-5xl w-full mt-10">
@@ -38,9 +41,11 @@ export default function Dashboard() {
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-                    {dataCategories.map((item, index) => {
-                        const isSelesai = item.status === "selesai";
-                        const isProses = item.status === "proses";
+                    {loading && <p>Loading...</p>}
+                    {!loading && forms?.length === 0 && <p>No forms available.</p>}
+                    {forms?.map((item, index) => {
+                        // const isSelesai = item.status === "selesai";
+                        // const isProses = item.status === "proses";
 
                         return (
                             <div 
@@ -49,9 +54,9 @@ export default function Dashboard() {
                             >
                                 <div className="flex flex-col gap-2">
                                     <div className="flex flex-col justify-center items-center">
-                                        <h3 className="font-semibold text-center text-lg md:text-xl text-purple-600">{item.title}</h3>
+                                        <h3 className="font-semibold text-center text-lg md:text-xl text-purple-600">{item.name}</h3>
                                         {/* Status badge */}
-                                        <div className="">
+                                        {/* <div className="">
                                             <span
                                                 className={`px-2 py-1 rounded text-xs font-medium ${
                                                     isSelesai
@@ -63,14 +68,14 @@ export default function Dashboard() {
                                             >
                                                 {item.status}
                                             </span>
-                                        </div>
+                                        </div> */}
                                     </div>
-                                    <p className="text-gray-600 text-sm md:text-base leading-relaxed hyphens-auto text-justify">
+                                    {/* <p className="text-gray-600 text-sm md:text-base leading-relaxed hyphens-auto text-justify">
                                         {item.description}
-                                    </p>
+                                    </p> */}
                                 </div>
 
-                                <Link href={`/form/detail/${index}`}>
+                                {/* <Link href={`/form/detail/${index}`}>
                                     <Button 
                                         className={`mt-6 text-white text-sm md:text-base py-2 transition-all duration-300 ${
                                             isSelesai
@@ -82,7 +87,7 @@ export default function Dashboard() {
                                     >
                                         {isSelesai ? "Lihat Hasil" : isProses ? "Lanjutkan" : "Isi Form"}
                                     </Button>
-                                </Link>
+                                </Link> */}
                             </div>
                         )
                     })}
