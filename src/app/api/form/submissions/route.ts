@@ -63,6 +63,12 @@ export async function GET(request: NextRequest) {
       return createAuthErrorResponse('Invalid or expired token');
     }
 
+    // Ensure user.id is valid and properly typed
+    if (!user.id || typeof user.id !== 'number' || user.id <= 0) {
+      console.error('Invalid user ID:', user.id);
+      return createAuthErrorResponse('Invalid user ID');
+    }
+
     // Get query parameters for filtering
     const { searchParams } = new URL(request.url);
     const assetId = searchParams.get('assetId');
@@ -70,7 +76,7 @@ export async function GET(request: NextRequest) {
     const understandLevel = searchParams.get('understandLevel');
     const includeFeedback = searchParams.get('includeFeedback') === 'true';
 
-    // Build where clause
+    // Build where clause - ensure only user's own submissions
     const whereClause: Prisma.SubmissionWhereInput = { userId: user.id };
     if (assetId) whereClause.assetId = parseInt(assetId);
     if (threatId) whereClause.threatId = parseInt(threatId);

@@ -37,9 +37,17 @@ export async function GET(request: NextRequest) {
       return createAuthErrorResponse('Invalid or expired token');
     }
 
-    // Get all submissions for the user
+    // Ensure user.id is valid and properly typed
+    if (!user.id || typeof user.id !== 'number' || user.id <= 0) {
+      console.error('Invalid user ID:', user.id);
+      return createAuthErrorResponse('Invalid user ID');
+    }
+
+    // Get all submissions for the authenticated user ONLY
     const submissions = await db.submission.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id // Explicitly filter by authenticated user's ID
+      },
       include: {
         riskInput: true,
         score: true,

@@ -5,68 +5,44 @@ import {
   handleApiError, 
   createSuccessResponse
 } from '@/lib/error-handler';
-import { Prisma } from '@prisma/client';
 
 /**
  * Get comprehensive analytics including user feedback
  * GET /api/form/admin/analytics
  * Protected with admin PIN
  */
-async function getAnalytics(request: NextRequest) {
+async function getAnalytics(_request: NextRequest) {
   try {
-    // Get query parameters for filtering
-    const { searchParams } = new URL(request.url);
-    const assetId = searchParams.get('assetId');
-    const threatId = searchParams.get('threatId');
-    const understandLevel = searchParams.get('understandLevel');
-    const riskCategory = searchParams.get('riskCategory');
-    const userId = searchParams.get('userId');
-
-    // Build where clause for submissions
-    const whereClause: Prisma.SubmissionWhereInput = {};
-    
-    if (assetId) whereClause.assetId = parseInt(assetId);
-    if (threatId) whereClause.threatId = parseInt(threatId);
-    if (understandLevel) whereClause.understand = understandLevel as 'MENGERTI' | 'TIDAK_MENGERTI';
-    if (userId) whereClause.userId = parseInt(userId);
-
-    // Get submissions with all related data
-    const submissions = await db.submission.findMany({
-      where: whereClause,
-      include: {
-        user: {
+    // Get all submissions with minimal data for aggregation
+    const allSubmissions = await db.submission.findMany({
+      select: {
+        id: true,
+        userId: true,
+        assetId: true,
+        threatId: true,
+        understand: true,
+        submittedAt: true,
+        riskInput: {
           select: {
-            id: true,
-            email: true,
-            name: true,
-            createdAt: true
+            f: true,
+            g: true,
+            h: true,
+            i: true
           }
         },
-        asset: {
+        score: {
           select: {
-            id: true,
-            name: true,
-            description: true
+            peluang: true,
+            impact: true,
+            total: true,
+            category: true
           }
         },
-        threat: {
-          select: {
-            id: true,
-            name: true,
-            description: true
-          }
-        },
-        riskInput: true,
-        score: true,
         feedback: {
           select: {
             id: true,
             field: true,
-            message: true,
             createdAt: true
-          },
-          orderBy: {
-            createdAt: 'desc'
           }
         }
       },
@@ -75,89 +51,33 @@ async function getAnalytics(request: NextRequest) {
       }
     });
 
-    // Filter by risk category if specified
-    let filteredSubmissions = submissions;
-    if (riskCategory) {
-      filteredSubmissions = submissions.filter(submission => 
-        submission.score?.category === riskCategory
-      );
-    }
-
-    // Get summary statistics
-    const totalSubmissions = filteredSubmissions.length;
+    // Aggregate summary statistics
+    const totalSubmissions = allSubmissions.length;
     const understandStats = {
-      mengerti: filteredSubmissions.filter(s => s.understand === 'MENGERTI').length,
-      tidakMengerti: filteredSubmissions.filter(s => s.understand === 'TIDAK_MENGERTI').length
+      mengerti: allSubmissions.filter(s => s.understand === 'MENGERTI').length,
+      tidakMengerti: allSubmissions.filter(s => s.understand === 'TIDAK_MENGERTI').length,
+      total: allSubmissions.length
     };
 
     const riskCategoryStats = {
-      LOW: filteredSubmissions.filter(s => s.score?.category === 'LOW').length,
-      MEDIUM: filteredSubmissions.filter(s => s.score?.category === 'MEDIUM').length,
-      HIGH: filteredSubmissions.filter(s => s.score?.category === 'HIGH').length
+      LOW: allSubmissions.filter(s => s.score?.category === 'LOW').length,
+      MEDIUM: allSubmissions.filter(s => s.score?.category === 'MEDIUM').length,
+      HIGH: allSubmissions.filter(s => s.score?.category === 'HIGH').length,
+      none: allSubmissions.filter(s => !s.score).length
     };
 
-    interface RecentFeedbackItem {
-      id: number;
-      field: string;
-      message: string;
-      createdAt: Date;
-      user: {
-        id: number;
-        email: string;
-        name: string | null;
-      };
-      asset: {
-        id: number;
-        name: string;
-      };
-      threat: {
-        id: number;
-        name: string;
-      };
-    }
-
-    // Get feedback statistics
+    // Aggregate feedback statistics
     const feedbackStats = {
-      totalFeedback: filteredSubmissions.reduce((sum, s) => sum + s.feedback.length, 0),
-      feedbackByField: {} as Record<string, number>,
-      recentFeedback: [] as RecentFeedbackItem[]
+      totalFeedback: allSubmissions.reduce((sum, s) => sum + s.feedback.length, 0),
+      feedbackByField: {} as Record<string, number>
     };
 
-    // Analyze feedback by field
-    filteredSubmissions.forEach(submission => {
+    allSubmissions.forEach(submission => {
       submission.feedback.forEach(feedback => {
         feedbackStats.feedbackByField[feedback.field] = 
           (feedbackStats.feedbackByField[feedback.field] || 0) + 1;
-        
-        // Collect recent feedback (last 20)
-        if (feedbackStats.recentFeedback.length < 20) {
-          feedbackStats.recentFeedback.push({
-            id: feedback.id,
-            field: feedback.field,
-            message: feedback.message,
-            createdAt: feedback.createdAt,
-            user: {
-              id: submission.user.id,
-              email: submission.user.email,
-              name: submission.user.name
-            },
-            asset: {
-              id: submission.asset.id,
-              name: submission.asset.name
-            },
-            threat: {
-              id: submission.threat.id,
-              name: submission.threat.name
-            }
-          });
-        }
       });
     });
-
-    // Sort recent feedback by date
-    feedbackStats.recentFeedback.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
 
     // Get asset-wise statistics
     const assetStats = await db.asset.findMany({
@@ -291,38 +211,44 @@ async function getAnalytics(request: NextRequest) {
       })
     };
 
+    // Calculate average risk scores
+    const avgRiskScore = allSubmissions.length > 0
+      ? allSubmissions.reduce((sum, s) => sum + (s.score?.total || 0), 0) / allSubmissions.length
+      : 0;
+
+    const avgPeluang = allSubmissions.length > 0
+      ? allSubmissions.reduce((sum, s) => sum + (s.score?.peluang || 0), 0) / allSubmissions.length
+      : 0;
+
+    const avgImpact = allSubmissions.length > 0
+      ? allSubmissions.reduce((sum, s) => sum + (s.score?.impact || 0), 0) / allSubmissions.length
+      : 0;
+
     return createSuccessResponse({
       summary: {
         totalSubmissions,
+        totalUsers: new Set(allSubmissions.map(s => s.userId)).size,
+        totalAssets: assetStats.length,
+        totalThreats: assetStats.reduce((sum, a) => sum + a._count.threats, 0),
         understandStats,
         riskCategoryStats,
         feedbackStats: {
           totalFeedback: feedbackStats.totalFeedback,
-          feedbackByField: feedbackStats.feedbackByField
+          feedbackByField: feedbackStats.feedbackByField,
+          mostCommonFields: Object.entries(feedbackStats.feedbackByField)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10)
+            .map(([field, count]) => ({ field, count }))
+        },
+        averageScores: {
+          riskScore: Math.round(avgRiskScore * 100) / 100,
+          peluang: Math.round(avgPeluang * 100) / 100,
+          impact: Math.round(avgImpact * 100) / 100
         }
       },
-      submissions: filteredSubmissions.map(submission => ({
-        id: submission.id,
-        submittedAt: submission.submittedAt,
-        understand: submission.understand,
-        user: submission.user,
-        asset: submission.asset,
-        threat: submission.threat,
-        riskInput: submission.riskInput,
-        score: submission.score,
-        feedback: submission.feedback
-      })),
       assetAnalytics,
       userAnalytics,
-      feedbackAnalysis,
-      recentFeedback: feedbackStats.recentFeedback,
-      filters: {
-        assetId,
-        threatId,
-        understandLevel,
-        riskCategory,
-        userId
-      }
+      feedbackAnalysis
     }, 'Analytics retrieved successfully');
 
   } catch (error) {
