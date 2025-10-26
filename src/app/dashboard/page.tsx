@@ -7,7 +7,7 @@ import { useGetAllForms } from "@/hooks/forms/useGetAllForms";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function Dashboard() {
-    const { forms, loading, error } = useGetAllForms();
+    const { forms, loading } = useGetAllForms();
     
     return (
         <div className="flex min-h-screen items-center justify-center bg-white">
@@ -56,7 +56,6 @@ export default function Dashboard() {
                     {forms?.map((item, index) => {
                         const isSelesai = item.status === "COMPLETED";
                         const isProses = item.status === "IN_PROGRESS";
-                        const isBelumMulai = item.status === "NOT_STARTED";
 
                         return (
                             <div 

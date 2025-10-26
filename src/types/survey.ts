@@ -1,4 +1,4 @@
-import { Control, UseFormRegister, FieldErrors } from "react-hook-form";
+import { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Submission } from "@/types/form";
 
 type QuestionType = "short" | "long" | "radio" | "checkbox" | "email" | "dropdown" | "number" | "slider";
@@ -38,7 +38,7 @@ export interface QuestionFieldProps {
     index: number;
     register: UseFormRegister<Submission>;
     control: Control<Submission>;
-    errors?: any;
+    errors?: FieldErrors<Submission>;
 }
 
 export interface AnswerData {

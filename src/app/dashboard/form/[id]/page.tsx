@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
 import { generateQuestions } from "@/data/generateQuestions";
 import QuestionForm from "@/components/form/QuestionForm";
 import { Answers } from "@/types/survey";
@@ -76,6 +75,7 @@ export default function SurveyPage() {
                 toast.success("Survey selesai! Data berhasil dikirim.");
                 setIsModalOpen(true);
             } catch (err) {
+                console.error(err);
                 toast.error("Gagal mengirim survey.");
             } finally {
                 setIsSubmitting(false);
@@ -107,7 +107,6 @@ export default function SurveyPage() {
 
     const threatId = threatIds[currentIndex];
     const topic = topics[currentIndex];
-    const topicDescription = description[currentIndex];
     const questions = generateQuestions(threatId);
 
     return (

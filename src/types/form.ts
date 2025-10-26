@@ -133,7 +133,7 @@ export type SubmissionDetail = {
         category: string;
         formula: Record<string, string>;
     };
-    feedback: any[];
+    feedback: unknown[];
 };
 
 export interface SubmissionDescription {

@@ -20,7 +20,8 @@ export default function Result() {
         toast.success("Akses diterima 🎉");
         },
         onError: (err) => {
-        toast.error("PIN salah atau tidak memiliki akses ❌");
+            console.error(err);
+            toast.error("PIN salah atau tidak memiliki akses ❌");
         },
     });
 

@@ -27,7 +27,7 @@ export default function Register() {
     const { mutate, isPending } = useRegister(() => reset());
 
     const onSubmit = (data: RegisterFormData) => {
-        const { confirmPassword, ...payload } = data; 
+        const { confirmPassword: _confirmPassword, ...payload } = data; 
         mutate(payload);
     }
     

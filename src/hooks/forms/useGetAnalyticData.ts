@@ -5,7 +5,7 @@ import { getAnalyticData } from "@/services/FormService";
 import { AnalyticResponse } from "@/types/analytics";
 
 export const useGetAnalyticData = (adminPin?: string) => {
-    const { data, isLoading, error, refetch } = useQuery<AnalyticResponse, Error>({
+    const { data, isLoading, error } = useQuery<AnalyticResponse, Error>({
         queryKey: ["analytics", adminPin],
         queryFn: async () => {
             if (!adminPin) throw new Error("PIN admin belum diatur");
