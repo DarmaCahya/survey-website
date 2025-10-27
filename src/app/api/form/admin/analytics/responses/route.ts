@@ -24,7 +24,7 @@ async function getIndividualResponses(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     // Build where clause
-    const where: any = {};
+    const where: { assetId?: number; threatId?: number; userId?: number } = {};
     if (assetId) where.assetId = parseInt(assetId);
     if (threatId) where.threatId = parseInt(threatId);
     if (userId) where.userId = parseInt(userId);

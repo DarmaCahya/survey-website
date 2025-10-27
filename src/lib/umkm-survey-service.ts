@@ -116,6 +116,22 @@ export class UMKMSurveyService implements IUMKMSurveyService {
   }
 
   /**
+   * Helper function to get feedback field value with multiple name variations
+   */
+  private getFeedbackFieldValue(
+    obj: Record<string, unknown>,
+    fieldNames: string[]
+  ): string | undefined {
+    for (const fieldName of fieldNames) {
+      const value = obj[fieldName];
+      if (typeof value === 'string' && value) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Create batch submissions for multiple threats in an asset
    */
   async createBatchSubmission(
@@ -157,6 +173,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
             const submissionId = existingSubmission.id;
             
             // Handle field name variations for backward compatibility
+            // Convert answers to SubmitInputsRequest format
+            // Handle field name variations for backward compatibility
             const inputsRequest: SubmitInputsRequest = {
               biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
               pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
@@ -164,9 +182,17 @@ export class UMKMSurveyService implements IUMKMSurveyService {
               Pemulihan: threatAnswer.Pemulihan,
               mengerti_poin: threatAnswer.mengerti_poin,
               // Handle different field name variations
-              Tidak_mengerti_poin: (threatAnswer as any).Tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti,
+              Tidak_mengerti_poin: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+                'Tidak_mengerti_poin',
+                'tidak_mengerti_poin',
+                'tidak_mengerti'
+              ]),
               // Handle description field name variations
-              description_tidak_mengerti: (threatAnswer as any).description_tidak_mengerti || (threatAnswer as any).tidak_mengerti_description || (threatAnswer as any).description
+              description_tidak_mengerti: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+                'description_tidak_mengerti',
+                'tidak_mengerti_description',
+                'description'
+              ])
             };
 
             const result = await this.submitInputs(userId, submissionId, inputsRequest);
@@ -205,9 +231,17 @@ export class UMKMSurveyService implements IUMKMSurveyService {
               Pemulihan: threatAnswer.Pemulihan,
               mengerti_poin: threatAnswer.mengerti_poin,
               // Handle different field name variations
-              Tidak_mengerti_poin: (threatAnswer as any).Tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti,
+              Tidak_mengerti_poin: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+                'Tidak_mengerti_poin',
+                'tidak_mengerti_poin',
+                'tidak_mengerti'
+              ]),
               // Handle description field name variations
-              description_tidak_mengerti: (threatAnswer as any).description_tidak_mengerti || (threatAnswer as any).tidak_mengerti_description || (threatAnswer as any).description
+              description_tidak_mengerti: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+                'description_tidak_mengerti',
+                'tidak_mengerti_description',
+                'description'
+              ])
             };
 
         // Submit inputs and calculate scores
