@@ -13,7 +13,6 @@ import {
  */
 async function getAnalytics(_request: NextRequest) {
   try {
-    // Get all submissions with minimal data for aggregation
     const allSubmissions = await db.submission.findMany({
       select: {
         id: true,
@@ -42,7 +41,32 @@ async function getAnalytics(_request: NextRequest) {
           select: {
             id: true,
             field: true,
+            message: true,
             createdAt: true
+          }
+        },
+        // Get user details for individual responses
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        // Get asset details
+        asset: {
+          select: {
+            id: true,
+            name: true,
+            description: true
+          }
+        },
+        // Get threat details
+        threat: {
+          select: {
+            id: true,
+            name: true,
+            description: true
           }
         }
       },
@@ -224,6 +248,67 @@ async function getAnalytics(_request: NextRequest) {
       ? allSubmissions.reduce((sum, s) => sum + (s.score?.impact || 0), 0) / allSubmissions.length
       : 0;
 
+    // Build individual responses grouped by asset and threat
+    // This provides Google Forms-like view of responses
+    const individualResponses = allSubmissions.map(submission => ({
+      submissionId: submission.id,
+      submittedAt: submission.submittedAt,
+      user: {
+        id: submission.user.id,
+        email: submission.user.email,
+        name: submission.user.name
+      },
+      asset: {
+        id: submission.asset.id,
+        name: submission.asset.name,
+        description: submission.asset.description
+      },
+      threat: {
+        id: submission.threat.id,
+        name: submission.threat.name,
+        description: submission.threat.description
+      },
+      responses: {
+        // Risk Assessment Questions
+        biaya_pengetahuan: {
+          question: "Biaya & Pengetahuan",
+          answer: submission.riskInput?.f || null,
+          meaning: submission.riskInput?.f ? `Level ${submission.riskInput.f} (1-6)` : null
+        },
+        pengaruh_kerugian: {
+          question: "Pengaruh & Kerugian",
+          answer: submission.riskInput?.g || null,
+          meaning: submission.riskInput?.g ? `Level ${submission.riskInput.g} (1-6)` : null
+        },
+        frekuensi_serangan: {
+          question: "Frekuensi Serangan",
+          answer: submission.riskInput?.h || null,
+          meaning: submission.riskInput?.h ? `Level ${submission.riskInput.h} (1-6)` : null
+        },
+        pemulihan: {
+          question: "Pemulihan",
+          answer: submission.riskInput?.i || null,
+          meaning: submission.riskInput?.i ? `Level ${submission.riskInput.i} (2/4/6)` : null
+        },
+        // Understanding Question
+        memahami_ancaman: {
+          question: "Apakah Anda memahami ancaman ini?",
+          answer: submission.understand,
+          meaning: submission.understand === 'MENGERTI' ? 'Mengerti' : 'Tidak Mengerti'
+        },
+        // Calculated Scores
+        calculated_peluang: submission.score?.peluang || null,
+        calculated_impact: submission.score?.impact || null,
+        calculated_total: submission.score?.total || null,
+        calculated_category: submission.score?.category || null
+      },
+      feedback: submission.feedback.map(f => ({
+        field: f.field,
+        message: f.message,
+        createdAt: f.createdAt
+      }))
+    }));
+
     return createSuccessResponse({
       summary: {
         totalSubmissions,
@@ -248,7 +333,8 @@ async function getAnalytics(_request: NextRequest) {
       },
       assetAnalytics,
       userAnalytics,
-      feedbackAnalysis
+      feedbackAnalysis,
+      individualResponses // Google Forms-like responses
     }, 'Analytics retrieved successfully');
 
   } catch (error) {
