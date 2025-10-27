@@ -110,8 +110,8 @@ export default function SurveyPage() {
     const questions = generateQuestions(threatId);
 
     return (
-        <div className="max-w-2xl mx-auto mt-10">
-            <div className="mb-4 flex items-center justify-between mx-4">
+        <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-2xl p-4 my-10">
+            <div className="mb-4 flex items-center justify-between mx-4 py-2">
                 <Link href="/dashboard">
                     <Button
                         variant="outline"
@@ -134,7 +134,7 @@ export default function SurveyPage() {
                 <h2 className="text-2xl font-bold text-purple-600">
                     {Threats?.asset?.name}
                 </h2>
-                <p className="text-base font-normal text-justify break-words text-black">
+                <p className="text-base font-normal text-justify text-black">
                     {Threats?.asset?.description}
                 </p>
             </div>
@@ -163,14 +163,13 @@ export default function SurveyPage() {
                 </div>
             )}
 
-            {isModalOpen && (
+            {/* {isModalOpen && (
                 <RiskModal
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     submissions={Threats?.threats.map(t => t.submission) || []}
                 />
-            )}
-
+            )} */}
         </div>
     );
 }

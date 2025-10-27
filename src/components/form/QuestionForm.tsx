@@ -36,7 +36,7 @@ export default function QuestionForm({
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-4 px-8">
+        <form onSubmit={handleSubmit} className="p-4">
             <h2 className="text-xl font-bold text-purple-500">{topic}</h2>
             <p className="text-base font-normal text-justify break-word mb-4">
                 {description}

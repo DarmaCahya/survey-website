@@ -93,7 +93,7 @@ export default function Dashboard() {
                                             ? "bg-green-600 hover:bg-green-700"
                                             : isProses
                                             ? "bg-yellow-500 hover:bg-yellow-600"
-                                            : "bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90"
+                                            : "bg-linear-to-r from-purple-600 to-purple-400 hover:opacity-90"
                                         }`}
                                     >
                                         {isSelesai ? "Lihat Hasil" : isProses ? "Lanjutkan" : "Isi Form"}

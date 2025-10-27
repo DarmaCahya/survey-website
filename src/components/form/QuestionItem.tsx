@@ -15,7 +15,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                     {question.required && <span className="text-red-500"> *</span>}
                 </label>
                 {question.description && (
-                    <p className="text-sm text-gray-500 mt-1">{question.description}</p>
+                    <p className="text-sm text-gray-500 mt-1 whitespace-pre-line">{question.description}</p>
                 )}
             </div>
 
@@ -33,26 +33,23 @@ export default function QuestionItem({ question, value, onChange }: Props) {
 
             {question.type === "slider" && (
                 <div className="flex flex-col gap-3">
-                    <div className="flex justify-between text-sm text-gray-600">
+                    <div className="flex justify-between text-sm font-semibold text-gray-700">
                         <span>{question.options?.[0]}</span>
                         <span>{question.options?.[1]}</span>
                     </div>
 
                     <div className="flex justify-between items-center">
-                        {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => (
-                            <label
-                                key={num}
-                                className="flex flex-col items-center cursor-pointer"
-                            >
-                                <input
-                                    type="radio"
-                                    name={question.id}
-                                    value={num}
-                                    checked={value === String(num)}
-                                    onChange={(e) => onChange(e.target.value)}
-                                    className="appearance-none h-5 w-5 rounded-full border-2 border-purple-500 checked:bg-purple-500 checked:border-purple-500 transition-all cursor-pointer"
-                                />
-                                <span className="text-xs mt-1">{num}</span>
+                        {(question.optionsNumbers || [1, 2, 3, 4, 5, 6]).map((num) => (
+                            <label key={num} className="flex flex-col items-center cursor-pointer">
+                            <input
+                                type="radio"
+                                name={question.id}
+                                value={num}
+                                checked={value === String(num)}
+                                onChange={(e) => onChange(e.target.value)}
+                                className="appearance-none h-5 w-5 rounded-full border-2 border-purple-500 checked:bg-purple-500 checked:border-purple-500 transition-all cursor-pointer"
+                            />
+                            <span className="text-xs mt-1">{num}</span>
                             </label>
                         ))}
                     </div>

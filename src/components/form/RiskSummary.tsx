@@ -28,7 +28,7 @@ export default function RiskSummary({ submissions }: RiskSummaryProps) {
     }
 
     return (
-        <div className="max-w-md mt-6 mx-auto bg-white shadow-lg rounded-2xl border border-gray-200 p-6 space-y-4">
+        <div className="mt-6 mx-auto p-6 space-y-4">
             <h3 className="text-xl font-semibold text-center text-purple-700">
                 💡 Hasil Analisis Risiko
             </h3>
