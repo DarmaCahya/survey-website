@@ -156,14 +156,17 @@ export class UMKMSurveyService implements IUMKMSurveyService {
           if (!existingSubmission.score) {
             const submissionId = existingSubmission.id;
             
+            // Handle field name variations for backward compatibility
             const inputsRequest: SubmitInputsRequest = {
               biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
               pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
               Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
               Pemulihan: threatAnswer.Pemulihan,
               mengerti_poin: threatAnswer.mengerti_poin,
-              Tidak_mengerti_poin: threatAnswer.Tidak_mengerti_poin,
-              description_tidak_mengerti: threatAnswer.description_tidak_mengerti
+              // Handle different field name variations
+              Tidak_mengerti_poin: (threatAnswer as any).Tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti,
+              // Handle description field name variations
+              description_tidak_mengerti: (threatAnswer as any).description_tidak_mengerti || (threatAnswer as any).tidak_mengerti_description || (threatAnswer as any).description
             };
 
             const result = await this.submitInputs(userId, submissionId, inputsRequest);
@@ -193,16 +196,19 @@ export class UMKMSurveyService implements IUMKMSurveyService {
           threatAnswer.threatId
         );
 
-        // Convert answers to SubmitInputsRequest format
-        const inputsRequest: SubmitInputsRequest = {
-          biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
-          pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
-          Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
-          Pemulihan: threatAnswer.Pemulihan,
-          mengerti_poin: threatAnswer.mengerti_poin,
-          Tidak_mengerti_poin: threatAnswer.Tidak_mengerti_poin,
-          description_tidak_mengerti: threatAnswer.description_tidak_mengerti
-        };
+            // Convert answers to SubmitInputsRequest format
+            // Handle field name variations for backward compatibility
+            const inputsRequest: SubmitInputsRequest = {
+              biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
+              pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
+              Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
+              Pemulihan: threatAnswer.Pemulihan,
+              mengerti_poin: threatAnswer.mengerti_poin,
+              // Handle different field name variations
+              Tidak_mengerti_poin: (threatAnswer as any).Tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti_poin || (threatAnswer as any).tidak_mengerti,
+              // Handle description field name variations
+              description_tidak_mengerti: (threatAnswer as any).description_tidak_mengerti || (threatAnswer as any).tidak_mengerti_description || (threatAnswer as any).description
+            };
 
         // Submit inputs and calculate scores
         const result = await this.submitInputs(userId, submissionId, inputsRequest);
