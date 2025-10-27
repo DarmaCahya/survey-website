@@ -14,8 +14,16 @@ import { makeSubmission } from "@/services/FormService";
 import toast from 'react-hot-toast';
 import RiskModal from "@/components/form/RiskModal";
 import RiskSummary from "@/components/form/RiskSummary";
+import { useNextStep } from "nextstepjs";
+import React from "react";
 
 export default function SurveyPage() {
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("formTour");
+    }, [startNextStep]);
+
     const params = useParams();
     const id = params?.id as string;
 
@@ -142,7 +150,7 @@ export default function SurveyPage() {
             {completedForm && Threats?.threats.length > 0 ? (
                 <RiskSummary submissions={Threats.threats.map(t => t.submission)} />
             ) : (
-                <div className="relative">
+                <div className="relative" id="form-questions">
                     <QuestionForm
                         key={topic}
                         description={description[currentIndex]}

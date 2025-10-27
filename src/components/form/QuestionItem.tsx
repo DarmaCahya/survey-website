@@ -1,4 +1,6 @@
 import { Question } from "@/types/survey";
+import { useNextStep } from "nextstepjs";
+import React from "react";
 
 type Props = {
     question: Question;
@@ -7,9 +9,15 @@ type Props = {
 };
 
 export default function QuestionItem({ question, value, onChange }: Props) {
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("formTour");
+    }, [startNextStep]);
+    
     return (
         <div className="flex flex-col gap-4 bg-white p-6 xl:p-8 rounded-lg border border-black/10 shadow-sm">
-            <div>
+            <div id="form-description" >
                 <label className="text-lg xl:text-xl font-normal text-gray-800">
                     {question.text}
                     {question.required && <span className="text-red-500"> *</span>}
