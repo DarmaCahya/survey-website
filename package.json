@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
+    "db:seed": "node scripts/seed.js",
     "seed:real-data": "node scripts/seed-real-data.js",
     "docker:start": "./docker.sh start",
     "docker:stop": "./docker.sh stop",
