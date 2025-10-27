@@ -64,13 +64,13 @@ jobs:
           git pull origin main
           
           # Stop existing containers
-          docker compose down || true
+          docker compose -f docker-compose.prod.yml down || true
           
           # Remove old images to save space
           docker image prune -f || true
           
-          # Build and start services
-          docker compose up --build -d
+          # Build and start services with production config
+          docker compose -f docker-compose.prod.yml up --build -d
           
           # Wait for services to be healthy
           echo "Waiting for services to start..."
@@ -81,7 +81,7 @@ jobs:
           curl -f http://localhost:3000/api/health || { echo "Health check failed!"; exit 1; }
           
           # Show running containers
-          docker compose ps
+          docker compose -f docker-compose.prod.yml ps
           
           echo "✅ Deployment completed successfully!"
           echo "🌐 Application available at: http://43.173.30.94:3000"

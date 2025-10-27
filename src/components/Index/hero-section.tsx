@@ -28,7 +28,7 @@ export default function HeroSection() {
                         size="lg"             
                         className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
                     >
-                        <Link href="/survey">
+                        <Link href="/auth/login">
                             Mulai Kuesioner
                         </Link>
                     </Button>
