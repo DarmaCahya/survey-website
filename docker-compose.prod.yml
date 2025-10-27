@@ -1,0 +1,49 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: survey-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: survey_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - survey-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application - Production Build
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: survey-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://neondb_owner:npg_cSHZpUfm6oK5@ep-long-cherry-ad4gmuof-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      JWT_SECRET: 8bee05d9f05b1d367ed47f9da766521c
+      ADMIN_PIN: akanselesai2025
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - survey-network
+
+volumes:
+  postgres_data:
+
+networks:
+  survey-network:
+    driver: bridge
