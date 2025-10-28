@@ -15,11 +15,9 @@ import toast from 'react-hot-toast';
 import RiskSummary from "@/components/form/RiskSummary";
 import { useNextStep } from "nextstepjs";
 import React from "react";
-import { useRouter } from "next/navigation";
 
 export default function SurveyPage() {
     const { startNextStep } = useNextStep();
-    const router = useRouter();
 
     React.useEffect(() => {
         startNextStep("formTour");
@@ -35,7 +33,7 @@ export default function SurveyPage() {
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { Threats, loading, error } = useThreatsByFormId(id);
+    const { Threats, loading, error, refetch } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
 
     useEffect(() => {
@@ -81,7 +79,7 @@ export default function SurveyPage() {
             try {
                 await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
-                router.push(`/dashboard/form/${id}`);
+                await refetch();
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");
