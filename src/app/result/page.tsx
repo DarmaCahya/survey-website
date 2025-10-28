@@ -36,10 +36,10 @@ export default function Result() {
         <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-purple-50 to-white text-center px-4"
+            className="min-h-screen flex flex-col justify-center items-center bg-linear-to-b from-purple-50 to-white text-center px-4"
         >
             <div className="max-w-md w-full bg-white border border-gray-200 shadow-md rounded-xl p-8 space-y-6">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
                     Masukkan PIN Admin
                 </h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -53,7 +53,7 @@ export default function Result() {
                     <Button
                         type="submit"
                         size="lg"
-                        className="w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
+                        className="w-full bg-linear-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white"
                         disabled={mutation.isPending || adminPin.length === 0} 
                     >
                     {mutation.isPending ? "Memeriksa..." : "Lanjutkan"}
@@ -67,7 +67,7 @@ export default function Result() {
 
     return (
         <div className="min-h-screen py-12 px-4 bg-[#fbfbfc]">
-            <h1 className="font-bold text-5xl text-center mb-12 bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="font-bold text-5xl text-center mb-12 bg-linear-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
                 Hasil Kuesioner
             </h1>
             <div className="max-w-5xl mx-auto bg-white border border-gray-200 shadow-md rounded-xl p-8">
