@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLogin } from "@/hooks/auth/useLogin";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +27,15 @@ export default function Login() {
     const onSubmit = (data: LoginRequest) => mutate(data);
     
     return (
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="relative flex min-h-screen items-center justify-center">
+            {isPending && (
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="flex flex-col items-center gap-4">
+                        <Spinner className="w-10 h-10 text-purple-600 animate-spin" />
+                        <p className="text-gray-700 font-medium">Memproses login...</p>
+                    </div>
+                </div>
+            )}
             <div className="w-full max-w-3xl flex flex-col items-center justify-center p-4 lg:p-14 gap-8 shadow-2xl rounded-2xl bg-white">
                 <div className="text-center space-y-5 text-[#212121]">
                     <h1 className="text-4xl font-bold">Masuk Ke Akun Anda</h1>

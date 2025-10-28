@@ -7,7 +7,7 @@ import { Sparkles } from "lucide-react";
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center text-center bg-gradient-to-b from-purple-50 to-white px-6">
+        <div className="min-h-screen flex flex-col items-center justify-center text-center bg-linear-to-b from-purple-50 to-white px-6">
             <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -16,7 +16,7 @@ export default function NotFound() {
             >
                 <Sparkles className="h-16 w-16 text-purple-500 mb-6 animate-pulse" />
 
-                <h1 className="text-7xl font-extrabold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent mb-4">
+                <h1 className="text-7xl font-extrabold bg-linear-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent mb-4">
                     403
                 </h1>
 
@@ -32,7 +32,7 @@ export default function NotFound() {
                 <Button
                     asChild
                     size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white px-8 py-6 text-lg transition-all duration-300"
+                    className="bg-linear-to-r from-purple-600 to-purple-400 hover:opacity-90 text-white px-8 py-6 text-lg transition-all duration-300"
                     >
                     <Link href="/auth/login">Login</Link>
                 </Button>
