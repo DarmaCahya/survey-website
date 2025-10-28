@@ -13,7 +13,7 @@ export const generateQuestions = (threatId: string): Question[] => [
             "6: Tidak perlu alat khusus dan biaya yang dikeluarkan pelaku rendah.",
         placeholder: "",
         type: "slider",
-        options: ["Rendah", "Tinggi"],
+        options: ["Tinggi", "Rendah"],
         optionsNumbers: [1, 2, 3, 4, 5, 6],
         required: true,
     },
