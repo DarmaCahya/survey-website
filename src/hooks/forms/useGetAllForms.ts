@@ -5,7 +5,7 @@ import { getAllForms } from "@/services/FormService";
 import { FormData } from "@/types/form";
 
 export const useGetAllForms = () => {
-    const { data, isLoading, error } = useQuery<FormData, Error>({
+    const { data, isLoading, error, refetch } = useQuery<FormData, Error>({
         queryKey: ["forms"],
         queryFn: async () => {
             const res = await getAllForms();
@@ -19,5 +19,6 @@ export const useGetAllForms = () => {
         forms: data,
         loading: isLoading,
         error,
+        refetch
     };
 };

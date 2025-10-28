@@ -12,13 +12,14 @@ import { ArrowLeft } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { makeSubmission } from "@/services/FormService";
 import toast from 'react-hot-toast';
-import RiskModal from "@/components/form/RiskModal";
 import RiskSummary from "@/components/form/RiskSummary";
 import { useNextStep } from "nextstepjs";
 import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SurveyPage() {
     const { startNextStep } = useNextStep();
+    const queryClient = useQueryClient();
 
     React.useEffect(() => {
         startNextStep("formTour");
@@ -32,10 +33,9 @@ export default function SurveyPage() {
     const [threatIds, setThreatIds] = useState<string[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
-    const [isModalOpen, setIsModalOpen] = useState(false); 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { Threats, loading, error } = useThreatsByFormId(id);
+    const { Threats, loading, error, refetch } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
 
     useEffect(() => {
@@ -81,7 +81,8 @@ export default function SurveyPage() {
             try {
                 await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
-                setIsModalOpen(true);
+                await refetch();
+                queryClient.invalidateQueries({ queryKey: ["forms"] }); 
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");

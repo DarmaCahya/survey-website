@@ -6,6 +6,7 @@ import React from "react";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { NextStepProvider, NextStep, Tour } from 'nextstepjs';
+import { useEffect, useState } from 'react';
 
 const steps = [
   {
@@ -124,11 +125,28 @@ const steps = [
   },
 ] as Tour[];
 
-
 export default function RootLayout({
   children,
 }: { children: React.ReactNode }) {
+  const [showTour, setShowTour] = useState(false);
   const [queryClient] = React.useState(() => new QueryClient());
+
+  useEffect(() => {
+    const flag = localStorage.getItem('hasSeenTour');
+    if (!flag) {
+      setShowTour(true);
+    }
+  }, []);
+
+  const handleComplete = (tourName: string | null) => {
+    localStorage.setItem('hasSeenTour', 'true');
+    setShowTour(false);
+  };
+
+  const handleSkip = (step: number, tourName: string | null) => {
+    localStorage.setItem("hasSeenTour", "true");
+    setShowTour(false);
+  };
   return (
     <html lang="en">
       <body
@@ -136,11 +154,18 @@ export default function RootLayout({
       >
         <QueryClientProvider client={queryClient}>
           <NextStepProvider>
-            <NextStep steps={steps}>
-            {children}
-            <Toaster position="top-right" reverseOrder={false} />
-            <ReactQueryDevtools initialIsOpen={false} />
-          </NextStep>
+            {showTour ? (
+              <NextStep steps={steps}
+                onComplete={handleComplete}
+                onSkip={handleSkip}
+              >
+              {children}
+              </NextStep>
+            ) : (
+              children
+            )}
+              <Toaster position="top-right" reverseOrder={false} />
+              <ReactQueryDevtools initialIsOpen={false} />
           </NextStepProvider>
         </QueryClientProvider>
       </body>
