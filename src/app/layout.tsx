@@ -138,12 +138,12 @@ export default function RootLayout({
     }
   }, []);
 
-  const handleComplete = (tourName: string | null) => {
+  const handleComplete = (_tourName: string | null) => {
     localStorage.setItem('hasSeenTour', 'true');
     setShowTour(false);
   };
 
-  const handleSkip = (step: number, tourName: string | null) => {
+  const handleSkip = (_step: number, _tourName: string | null) => {
     localStorage.setItem("hasSeenTour", "true");
     setShowTour(false);
   };
