@@ -15,9 +15,11 @@ import toast from 'react-hot-toast';
 import RiskSummary from "@/components/form/RiskSummary";
 import { useNextStep } from "nextstepjs";
 import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SurveyPage() {
     const { startNextStep } = useNextStep();
+    const queryClient = useQueryClient();
 
     React.useEffect(() => {
         startNextStep("formTour");
@@ -80,6 +82,7 @@ export default function SurveyPage() {
                 await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
                 await refetch();
+                queryClient.invalidateQueries({ queryKey: ["forms"] }); 
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");
