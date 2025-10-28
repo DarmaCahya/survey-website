@@ -11,6 +11,7 @@ export interface Question {
     required: boolean;
     options?: string[];
     description?: string;
+    optionsNumbers?: number[];
 }
 
 export type Answers = {

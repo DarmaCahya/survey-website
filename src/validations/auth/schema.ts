@@ -16,16 +16,14 @@ export const registerSchema = yup.object({
         .string()
         .required("Email wajib diisi")
         .email("Format email tidak valid"),
-
     password: yup
         .string()
         .required("Password wajib diisi")
-        .min(6, "Password minimal 6 karakter")
-        .matches(/[a-z]/, "Password harus mengandung huruf kecil")
-        .matches(/[A-Z]/, "Password harus mengandung huruf besar")
-        .matches(/\d/, "Password harus mengandung angka")
-        .matches(/[@$!%*?&]/, "Password harus mengandung simbol (@, $, !, %, *, ?, &)"),
-
+        .min(6, "Password harus memiliki minimal 6 karakter")
+        .matches(/[a-z]/, "Password harus mengandung minimal 1 huruf kecil")
+        .matches(/[A-Z]/, "Password harus mengandung minimal 1 huruf besar")
+        .matches(/\d/, "Password harus mengandung minimal 1 angka")
+        .matches(/[@$!%*?&]/, "Password harus mengandung minimal 1 simbol (@, $, !, %, *, ?, &)"),
     confirmPassword: yup
         .string()
         .required("Konfirmasi password wajib diisi")

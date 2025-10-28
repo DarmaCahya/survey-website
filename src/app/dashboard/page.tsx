@@ -1,18 +1,27 @@
 'use client';
 
 import Link from "next/link";
+import { useState } from "react";
+import { NextStep, useNextStep } from "nextstepjs";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button"
 import { useGetAllForms } from "@/hooks/forms/useGetAllForms";
 import { Spinner } from "@/components/ui/spinner";
+import React from "react";
 
 export default function Dashboard() {
     const { forms, loading } = useGetAllForms();
-    
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("mainTour");
+    }, [startNextStep]);
+  
     return (
         <div className="flex min-h-screen items-center justify-center bg-white">
             <div className="flex flex-col items-center justify-center gap-6 max-w-xs md:max-w-2xl xl:max-w-6xl w-full mt-10">
-                <div className="flex flex-col items-center text-center gap-4">
+                <div id="dashboard-overview" className="flex flex-col items-center text-center gap-4">
                     <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-black leading-tight">
                         Kuesioner Perlindungan Data untuk <span className="text-purple-600">UMKM</span>
                     </h1>
@@ -39,7 +48,7 @@ export default function Dashboard() {
                     </p>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3 mb-10">
+                <div id="forms-list" className="grid gap-8 md:grid-cols-2 xl:grid-cols-3 mb-10">
                     {loading && (
                     <div className="col-span-full flex flex-col items-center justify-center py-10">
                         <Spinner className="w-10 h-10 text-purple-600 mb-4" />
@@ -59,6 +68,7 @@ export default function Dashboard() {
 
                         return (
                             <div 
+                                id="form-card"
                                 key={index}
                                 className="border border-black/10 bg-white rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300 p-6 flex flex-col justify-between text-center"
                             >
@@ -93,7 +103,7 @@ export default function Dashboard() {
                                             ? "bg-green-600 hover:bg-green-700"
                                             : isProses
                                             ? "bg-yellow-500 hover:bg-yellow-600"
-                                            : "bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90"
+                                            : "bg-linear-to-r from-purple-600 to-purple-400 hover:opacity-90"
                                         }`}
                                     >
                                         {isSelesai ? "Lihat Hasil" : isProses ? "Lanjutkan" : "Isi Form"}

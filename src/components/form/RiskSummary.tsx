@@ -3,12 +3,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmissionDescription } from "@/types/form";
+import { useNextStep } from "nextstepjs";
+import React from "react";
 
 interface RiskSummaryProps {
   submissions: SubmissionDescription[];
 }
 
 export default function RiskSummary({ submissions }: RiskSummaryProps) {
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("resultTour");
+    }, [startNextStep]);
+
     const [currentIndex, setCurrentIndex] = useState(0);
 
     if (!submissions || submissions.length === 0) return null;
@@ -28,7 +36,7 @@ export default function RiskSummary({ submissions }: RiskSummaryProps) {
     }
 
     return (
-        <div className="max-w-md mt-6 mx-auto bg-white shadow-lg rounded-2xl border border-gray-200 p-6 space-y-4">
+        <div id="result-summary" className="mt-6 mx-auto p-6 space-y-4">
             <h3 className="text-xl font-semibold text-center text-purple-700">
                 💡 Hasil Analisis Risiko
             </h3>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { InferType } from "yup";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { registerSchema } from "@/validations/auth/schema";
 import { useRegister } from "@/hooks/auth/useRegister";
@@ -14,6 +16,8 @@ import { Label } from "@/components/ui/label";
 type RegisterFormData = InferType<typeof registerSchema>;
 
 export default function Register() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const {
         register,
         handleSubmit,
@@ -32,8 +36,8 @@ export default function Register() {
     }
     
     return (
-        <div className="flex min-h-screen items-center justify-center bg-white">
-            <div className="w-full max-w-3xl flex flex-col items-center justify-center p-4 lg:p-14 gap-8">
+        <div className="flex min-h-screen items-center justify-center">
+            <div className="w-full max-w-3xl flex flex-col items-center justify-center p-4 lg:p-14 gap-8 shadow-2xl rounded-2xl bg-white">
                 <div className="text-center space-y-5 text-[#212121]">
                     <h1 className="text-4xl font-bold">Daftarkan Akun</h1>
                     <p className="w-full text-lg max-w-xl">
@@ -81,13 +85,22 @@ export default function Register() {
                         >
                             Password
                         </Label>
-                        <Input
-                            type="password"
-                            id="password"
-                            {...register("password")}
-                            placeholder="Enter your password"
-                            className="py-6 placeholder:text-[#616161]"
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                {...register("password")}
+                                placeholder="Enter your password"
+                                className="py-6 placeholder:text-[#616161]"
+                            />
+                            <Button
+                                type="button"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </Button>
+                        </div>
                         <p className="text-gray-700 text-sm">Gunakan password yang mudah anda ingat</p>
 
                         <ul className="text-sm ml-2 flex flex-col gap-1 text-gray-800">
@@ -122,13 +135,22 @@ export default function Register() {
                         >
                             Konfirmasi Password
                         </Label>
-                        <Input
-                            type="password"
-                            id="confirmPassword"
-                            {...register("confirmPassword")}
-                            placeholder="Enter your password"
-                            className="py-6 placeholder:text-[#616161]"
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                id="confirmPassword"
+                                {...register("confirmPassword")}
+                                placeholder="Enter your password"
+                                className="py-6 placeholder:text-[#616161]"
+                            />
+                            <Button
+                                type="button"
+                                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                            >
+                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </Button>
+                        </div>
                         {errors.confirmPassword && <p className="text-red-600 text-sm">{errors.confirmPassword.message}</p>}
                     </div>
                     <Button 
@@ -136,7 +158,7 @@ export default function Register() {
                         size="lg"   
                         type="submit"
                         disabled={isPending}          
-                        className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
+                        className="bg-linear-to-r my-2 from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
                     >
                         {isPending ? "Loading..." : "Register"}
                     </Button>

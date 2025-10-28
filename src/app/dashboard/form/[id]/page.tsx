@@ -14,8 +14,16 @@ import { makeSubmission } from "@/services/FormService";
 import toast from 'react-hot-toast';
 import RiskModal from "@/components/form/RiskModal";
 import RiskSummary from "@/components/form/RiskSummary";
+import { useNextStep } from "nextstepjs";
+import React from "react";
 
 export default function SurveyPage() {
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("formTour");
+    }, [startNextStep]);
+
     const params = useParams();
     const id = params?.id as string;
 
@@ -110,8 +118,8 @@ export default function SurveyPage() {
     const questions = generateQuestions(threatId);
 
     return (
-        <div className="max-w-2xl mx-auto mt-10">
-            <div className="mb-4 flex items-center justify-between mx-4">
+        <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-2xl p-4 my-10">
+            <div className="mb-4 flex items-center justify-between mx-4 py-2">
                 <Link href="/dashboard">
                     <Button
                         variant="outline"
@@ -134,7 +142,7 @@ export default function SurveyPage() {
                 <h2 className="text-2xl font-bold text-purple-600">
                     {Threats?.asset?.name}
                 </h2>
-                <p className="text-base font-normal text-justify break-words text-black">
+                <p className="text-base font-normal text-justify text-black">
                     {Threats?.asset?.description}
                 </p>
             </div>
@@ -142,7 +150,7 @@ export default function SurveyPage() {
             {completedForm && Threats?.threats.length > 0 ? (
                 <RiskSummary submissions={Threats.threats.map(t => t.submission)} />
             ) : (
-                <div className="relative">
+                <div className="relative" id="form-questions">
                     <QuestionForm
                         key={topic}
                         description={description[currentIndex]}
@@ -163,14 +171,13 @@ export default function SurveyPage() {
                 </div>
             )}
 
-            {isModalOpen && (
+            {/* {isModalOpen && (
                 <RiskModal
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     submissions={Threats?.threats.map(t => t.submission) || []}
                 />
-            )}
-
+            )} */}
         </div>
     );
 }

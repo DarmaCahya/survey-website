@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { loginSchema } from "@/validations/auth/schema";
 import { LoginRequest } from "@/types/auth";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useLogin } from "@/hooks/auth/useLogin";
 
 export default function Login() {
+    const [showPassword, setShowPassword] = useState(false);
     const { 
         register, 
         handleSubmit, 
@@ -23,8 +26,8 @@ export default function Login() {
     const onSubmit = (data: LoginRequest) => mutate(data);
     
     return (
-        <div className="flex min-h-screen items-center justify-center bg-white">
-            <div className="w-full max-w-3xl flex flex-col items-center justify-center p-4 lg:p-14 gap-8">
+        <div className="flex min-h-screen items-center justify-center">
+            <div className="w-full max-w-3xl flex flex-col items-center justify-center p-4 lg:p-14 gap-8 shadow-2xl rounded-2xl bg-white">
                 <div className="text-center space-y-5 text-[#212121]">
                     <h1 className="text-4xl font-bold">Masuk Ke Akun Anda</h1>
                     <p className="w-full text-lg max-w-xl">
@@ -56,26 +59,36 @@ export default function Login() {
                         >
                             Password
                         </Label>
-                        <Input
-                            type="password"
-                            id="password"
-                            {...register("password")}
-                            placeholder="Enter your password"
-                            className="py-6 placeholder:text-[#616161]"
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                {...register("password")}
+                                placeholder="Enter your password"
+                                className="py-6 placeholder:text-[#616161] pr-12"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+
                         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
                     </div>
-                    <div className="flex items-center justify-end">
+                    {/* <div className="flex items-center justify-end">
                         <Link href="/auth/forgot-password" className="text-base font-semibold text-[#1E1E1E] hover:underline">
                             Lupa Kata Sandi
                         </Link>
-                    </div>
+                    </div> */}
                     <Button 
                         variant="secondary"   
                         size="lg"   
                         type="submit"
                         disabled={isPending}          
-                        className="bg-gradient-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
+                        className="bg-linear-to-r from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
                     >
                         {isPending ? "Loading..." : "Login"}
                     </Button>

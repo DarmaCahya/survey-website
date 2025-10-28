@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Question, Answers } from "@/types/survey";
 import QuestionItem from "./QuestionItem";
 import { Button } from "@/components/ui/button";
+import { useNextStep } from "nextstepjs";
+import React from "react";
 
 type Props = {
     topic: string;
@@ -24,6 +26,12 @@ export default function QuestionForm({
     isFirst = false,
     isLast = false,
 }: Props) {    
+    const { startNextStep } = useNextStep();
+
+    React.useEffect(() => {
+        startNextStep("formTour");
+    }, [startNextStep]);
+
     const [answers, setAnswers] = useState<Answers>(initialAnswers);
 
     const handleChange = (id: string, value: string | number) => {
@@ -36,17 +44,19 @@ export default function QuestionForm({
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-4 px-8">
-            <h2 className="text-xl font-bold text-purple-500">{topic}</h2>
-            <p className="text-base font-normal text-justify break-word mb-4">
-                {description}
-            </p>
+        <form onSubmit={handleSubmit} className="p-4">
+            <div id="form-header">
+                <h2 className="text-xl font-bold text-purple-500">{topic}</h2>
+                <p className="text-base font-normal text-justify break-word mb-4">
+                    {description}
+                </p>
+            </div>
             <div className="flex flex-col gap-6">
                 {questions.map((q) => (
                     <QuestionItem key={q.id} question={q} value={answers[q.id] || ""} onChange={(val) => handleChange(q.id, val)} />
                 ))}
             </div>
-            <div className="flex justify-center gap-4 mt-6">
+            <div id="form-navigation" className="flex justify-center gap-4 mt-6">
                 {!isFirst && (
                     <Button
                         type="button"
@@ -59,6 +69,7 @@ export default function QuestionForm({
 
                 <Button 
                     type="submit" 
+                    id={isLast ? "submit-button" : ""} 
                     className={`${isLast ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"} px-10`}
                 >
                     {isLast ? "Submit" : "Next"}
