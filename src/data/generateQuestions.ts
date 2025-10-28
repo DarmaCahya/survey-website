@@ -82,6 +82,8 @@ export const generateQuestions = (threatId: string): Question[] => [
         "Pemulihan",
         ],
         required: false,
+        dependencyId: `${threatId}_pemahaman_poin`,  
+        dependencyValue: "Tidak Mengerti", 
     },
     {
         id: `${threatId}_penjelasan_tidak_dipahami`,
@@ -89,5 +91,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         placeholder: "Misal: saya tidak paham apa itu data pelanggan",
         type: "long",
         required: false,
+        dependencyId: `${threatId}_pemahaman_poin`,  
+        dependencyValue: "Tidak Mengerti", 
     },
 ];
