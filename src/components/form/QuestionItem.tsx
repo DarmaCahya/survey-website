@@ -46,8 +46,9 @@ export default function QuestionItem({ question, value, onChange }: Props) {
             {question.type === "slider" && (
                 <div className="flex flex-col gap-3">
                     <div className="flex justify-between text-sm font-semibold text-gray-700">
-                        <span>{question.options?.[0]}</span>
-                        <span>{question.options?.[1]}</span>
+                        {question.options?.map((option, index) => (
+                            <span key={index}>{option}</span>
+                        ))}                    
                     </div>
 
                     <div className="flex justify-between items-center">

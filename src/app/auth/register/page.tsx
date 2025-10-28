@@ -158,7 +158,7 @@ export default function Register() {
                         size="lg"   
                         type="submit"
                         disabled={isPending}          
-                        className="bg-linear-to-r my-2 from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
+                        className="bg-linear-to-r mb-2 mt-4 from-purple-600 to-purple-400 hover:opacity-90 transition-all duration-300 text-base md:text-xl p-2 text-white"
                     >
                         {isPending ? "Loading..." : "Register"}
                     </Button>
