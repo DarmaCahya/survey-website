@@ -20,7 +20,11 @@ export default function QuestionItem({ question, value, onChange }: Props) {
             <div id="form-description" >
                 <label className="text-lg xl:text-xl font-normal text-gray-800">
                     {question.text}
-                    {question.required && <span className="text-red-500"> *</span>}
+                    {question.required ? (
+                        <span className="text-red-500"> *</span>
+                    ) : (
+                        <span className="text-gray-400 text-sm italic"> (optional)</span>
+                    )}
                 </label>
                 {question.description && (
                     <p className="text-sm text-gray-500 mt-1 whitespace-pre-line">{question.description}</p>
