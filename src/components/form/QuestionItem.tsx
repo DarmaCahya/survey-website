@@ -46,8 +46,9 @@ export default function QuestionItem({ question, value, onChange }: Props) {
             {question.type === "slider" && (
                 <div className="flex flex-col gap-3">
                     <div className="flex justify-between text-sm font-semibold text-gray-700">
-                        <span>{question.options?.[0]}</span>
-                        <span>{question.options?.[1]}</span>
+                        {question.options?.map((option, index) => (
+                            <span key={index}>{option}</span>
+                        ))}                    
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -59,6 +60,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                                 value={num}
                                 checked={value === String(num)}
                                 onChange={(e) => onChange(e.target.value)}
+                                required={question.required}
                                 className="appearance-none h-5 w-5 rounded-full border-2 border-purple-500 checked:bg-purple-500 checked:border-purple-500 transition-all cursor-pointer"
                             />
                             <span className="text-xs mt-1">{num}</span>
@@ -112,6 +114,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     rows={1}
+                    required={question.required}
                     className="max-w-2xl border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 placeholder-gray-400 transition-all duration-200"
                 />
             )}

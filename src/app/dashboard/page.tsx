@@ -9,7 +9,7 @@
     import React from "react";
 
     export default function Dashboard() {
-        const { forms, loading, refetch } = useGetAllForms();
+        const { forms, loading } = useGetAllForms();
         const { startNextStep } = useNextStep();
 
         React.useEffect(() => {

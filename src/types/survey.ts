@@ -12,6 +12,8 @@ export interface Question {
     options?: string[];
     description?: string;
     optionsNumbers?: number[];
+    dependencyId?: string;
+    dependencyValue?: string;
 }
 
 export type Answers = {

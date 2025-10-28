@@ -52,9 +52,32 @@ export default function QuestionForm({
                 </p>
             </div>
             <div className="flex flex-col gap-6">
-                {questions.map((q) => (
-                    <QuestionItem key={q.id} question={q} value={answers[q.id] || ""} onChange={(val) => handleChange(q.id, val)} />
-                ))}
+                {questions.map((q) => {
+                    let isVisible = true;
+
+                    if (q.dependencyId) {
+                        const parentAnswer = answers[q.dependencyId];
+                        if (parentAnswer !== q.dependencyValue) {
+                            isVisible = false;
+                        }
+                    }
+
+                    if (!isVisible) return null;
+
+                    const effectiveQuestion = {
+                        ...q,
+                        required: q.required || (!!q.dependencyId && !!answers[q.dependencyId]),
+                    };
+
+                    return (
+                        <QuestionItem
+                            key={q.id}
+                            question={effectiveQuestion}
+                            value={answers[q.id] || ""}
+                            onChange={(val) => handleChange(q.id, val)}
+                        />
+                    );
+                })}
             </div>
             <div id="form-navigation" className="flex justify-center gap-4 mt-6">
                 {!isFirst && (

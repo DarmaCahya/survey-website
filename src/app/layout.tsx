@@ -15,7 +15,7 @@ const steps = [
       {
         icon: <span>👋</span>,
         title: "Selamat Datang",
-        content: "Ayo kita mulai blbabalbl!",
+        content: "Selamat datang di Dashboard! Yuk, kita mulai menjelajahi fitur-fitur yang tersedia untuk membantu mengelola rumah sakit dengan lebih mudah.",
         selector: "#dashboard-overview",
         side: "right" as const,
         showControls: true,
@@ -138,12 +138,12 @@ export default function RootLayout({
     }
   }, []);
 
-  const handleComplete = (tourName: string | null) => {
+  const handleComplete = (_tourName: string | null) => {
     localStorage.setItem('hasSeenTour', 'true');
     setShowTour(false);
   };
 
-  const handleSkip = (step: number, tourName: string | null) => {
+  const handleSkip = (_step: number, _tourName: string | null) => {
     localStorage.setItem("hasSeenTour", "true");
     setShowTour(false);
   };

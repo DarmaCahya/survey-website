@@ -42,7 +42,7 @@ export default function RiskSummary({ submissions }: RiskSummaryProps) {
             </h3>
 
             <div className="space-y-2">
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                     <span className="font-medium">Submission ID:</span>
                     <span className="font-mono text-gray-600">{current.submissionId}</span>
                 </div>
@@ -58,7 +58,7 @@ export default function RiskSummary({ submissions }: RiskSummaryProps) {
                 <div className="flex justify-between">
                     <span className="font-medium">Total Risiko:</span>
                     <span className="font-semibold">{current.score.total}</span>
-                </div>
+                </div> */}
                 <div className="flex justify-between">
                     <span className="font-medium">Kategori:</span>
                     <span className={`font-semibold ${getCategoryColor(current.score.category)}`}>
