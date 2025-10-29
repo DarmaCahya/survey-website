@@ -665,7 +665,7 @@ async function seedRealData() {
         }
       });
       createdAssets.push(asset);
-      console.log(✅ Created asset: ${asset.name});
+      console.log(`✅ Created asset: ${asset.name}`);
 
       // Create threats for this asset
       for (const threatData of assetData.threats) {
@@ -679,9 +679,22 @@ async function seedRealData() {
         console.log(`  ⚠️ Created threat: ${threat.name}`);
 
         // Link business processes if provided
-        const bps = Array.isArray(threatData.business_processes) ? threatData.business_processes : [];
+        // Support both "business_processes" (with quotes in JSON) and business_processes (without)
+        const bps = Array.isArray(threatData.business_processes) 
+          ? threatData.business_processes 
+          : (Array.isArray(threatData["business_processes"]) ? threatData["business_processes"] : []);
+        
+        if (bps.length > 0) {
+          console.log(`    📋 Found ${bps.length} business process(es) for threat: ${threat.name}`);
+        }
+        
         for (const bp of bps) {
-          const processName = bp.name.trim();
+          const processName = (bp.name || bp["name"] || "").trim();
+          if (!processName) {
+            console.warn(`    ⚠️  Skipping business process with empty name`);
+            continue;
+          }
+          
           let processId = bpNameToId.get(processName);
           if (!processId) {
             // Try to find existing by name to avoid duplicates (no unique constraint in schema)
@@ -689,8 +702,9 @@ async function seedRealData() {
             if (existing) {
               processId = existing.id;
             } else {
+              const explanation = bp.explanation || bp["explanation"] || null;
               const created = await prisma.businessProcess.create({
-                data: { name: processName, description: bp.explanation || null }
+                data: { name: processName, description: explanation }
               });
               processId = created.id;
               console.log(`    🧭 Created business process: ${processName}`);
@@ -700,7 +714,7 @@ async function seedRealData() {
           await prisma.threatBusinessProcess.create({
             data: { threatId: threat.id, businessProcessId: processId }
           });
-          console.log(`    🔗 Linked threat -> business process: ${processName}`);
+          console.log(`    🔗 Linked threat "${threat.name}" -> business process: ${processName}`);
         }
       }
     }
@@ -709,9 +723,9 @@ async function seedRealData() {
     const bpCount = await prisma.businessProcess.count();
 
     console.log('🎉 Real data seeding completed successfully!');
-    console.log(📊 Created ${createdAssets.length} assets);
-    console.log(⚠️ Created threats for all assets);
-    console.log(🔄 Total business processes in DB: ${bpCount});
+    console.log(`📊 Created ${createdAssets.length} assets`);
+    console.log(`⚠️ Created threats for all assets`);
+    console.log(`🔄 Total business processes in DB: ${bpCount}`);
 
   } catch (error) {
     console.error('❌ Error seeding real data:', error);

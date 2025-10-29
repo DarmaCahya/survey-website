@@ -446,7 +446,7 @@ async function seedRealData() {
         }
       });
       createdAssets.push(asset);
-      console.log(✅ Created asset: ${asset.name});
+      console.log(`✅ Created asset: ${asset.name}`);
 
       // Create threats for this asset
       for (const threatData of assetData.threats) {
@@ -462,8 +462,18 @@ async function seedRealData() {
         const bps: BusinessProcessInput[] = Array.isArray(threatData.business_processes)
           ? threatData.business_processes
           : [];
+        
+        if (bps.length > 0) {
+          console.log(`    📋 Found ${bps.length} business process(es) for threat: ${threat.name}`);
+        }
+        
         for (const bp of bps) {
-          const name = bp.name.trim();
+          const name = (bp.name || '').trim();
+          if (!name) {
+            console.warn(`    ⚠️  Skipping business process with empty name`);
+            continue;
+          }
+          
           let id = bpNameToId.get(name);
           if (!id) {
             const existing = await prisma.businessProcess.findFirst({ where: { name } });
@@ -476,8 +486,10 @@ async function seedRealData() {
             }
             bpNameToId.set(name, id);
           }
-          await prisma.threatBusinessProcess.create({ data: { threatId: threat.id, businessProcessId: id } });
-          console.log(`    🔗 Linked threat -> business process: ${name}`);
+          await prisma.threatBusinessProcess.create({ 
+            data: { threatId: threat.id, businessProcessId: id } 
+          });
+          console.log(`    🔗 Linked threat "${threat.name}" -> business process: ${name}`);
         }
       }
     }
@@ -486,9 +498,9 @@ async function seedRealData() {
     const bpCount = await prisma.businessProcess.count();
 
     console.log('🎉 Real data seeding completed successfully!');
-    console.log(📊 Created ${createdAssets.length} assets);
-    console.log(⚠️ Created threats for all assets);
-    console.log(🔄 Total business processes in DB: ${bpCount});
+    console.log(`📊 Created ${createdAssets.length} assets`);
+    console.log(`⚠️ Created threats for all assets`);
+    console.log(`🔄 Total business processes in DB: ${bpCount}`);
 
   } catch (error) {
     console.error('❌ Error seeding real data:', error);
