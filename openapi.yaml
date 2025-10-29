@@ -220,6 +220,222 @@ paths:
                     type: string
                     example: "User submissions retrieved successfully"
 
+  /submit-form/{assetId}/{threatId}:
+    post:
+      summary: Submit form for a specific threat (All-in-one endpoint)
+      description: |
+        Single endpoint to create submission and submit risk assessment in one atomic operation.
+        Follows the principle: 1 threat = 1 form submission.
+        
+        Security features:
+        - Authentication required
+        - Input validation
+        - Duplicate submission prevention
+        - Asset-threat relationship validation
+      tags:
+        - Submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+          description: ID of the asset
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 2
+          description: ID of the threat belonging to the asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - biaya_pengetahuan
+                - pengaruh_kerugian
+                - Frekuensi_serangan
+                - Pemulihan
+                - mengerti_poin
+              properties:
+                biaya_pengetahuan:
+                  type: number
+                  minimum: 1
+                  maximum: 6
+                  example: 3
+                  description: Biaya & Pengetahuan (Peluang Serangan) - scale 1-6
+                pengaruh_kerugian:
+                  type: number
+                  minimum: 1
+                  maximum: 6
+                  example: 4
+                  description: Pengaruh & Kerugian (Impact) - scale 1-6
+                Frekuensi_serangan:
+                  type: number
+                  minimum: 1
+                  maximum: 6
+                  example: 2
+                  description: Frekuensi Serangan - scale 1-6
+                Pemulihan:
+                  type: number
+                  enum: [2, 4, 6]
+                  example: 4
+                  description: Pemulihan - allowed values 2, 4, or 6
+                mengerti_poin:
+                  type: boolean
+                  example: true
+                  description: Whether user understands the point
+                Tidak_mengerti_poin:
+                  type: string
+                  example: "Frekuensi Serangan"
+                  description: Required if mengerti_poin is false - what they don't understand
+                description_tidak_mengerti:
+                  type: string
+                  example: "Tidak memahami bagaimana frekuensi serangan dihitung"
+                  description: Optional description of what they don't understand
+      responses:
+        '200':
+          description: Threat assessment submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      submissionId:
+                        type: number
+                        example: 123
+                      threatId:
+                        type: number
+                        example: 2
+                      assetId:
+                        type: number
+                        example: 1
+                      scores:
+                        type: object
+                        properties:
+                          peluang:
+                            type: number
+                            example: 2.8333
+                          impact:
+                            type: number
+                            example: 3.0
+                          total:
+                            type: number
+                            example: 8
+                          category:
+                            type: string
+                            enum: [LOW, MEDIUM, HIGH]
+                            example: LOW
+                      threatDescription:
+                        type: object
+                        properties:
+                          category:
+                            type: string
+                            enum: [LOW, MEDIUM, HIGH]
+                          threatName:
+                            type: string
+                          description:
+                            type: string
+                          recommendations:
+                            type: array
+                            items:
+                              type: string
+                          priority:
+                            type: string
+                            enum: [LOW, MEDIUM, HIGH]
+                          actionRequired:
+                            type: boolean
+                      submittedAt:
+                        type: string
+                        format: date-time
+                  message:
+                    type: string
+                    example: "Threat assessment submitted successfully"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "INVALID_RISK_INPUT"
+                  message:
+                    type: string
+                    example: "Invalid biaya_pengetahuan: 7. Must be 1-6"
+                  code:
+                    type: string
+                    example: "INVALID_RISK_INPUT"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "AUTH_ERROR"
+                  message:
+                    type: string
+                    example: "Invalid or expired token"
+                  code:
+                    type: string
+                    example: "AUTH_ERROR"
+        '404':
+          description: Asset or threat not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "Threat 2 does not belong to asset 1"
+        '409':
+          description: Submission already completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "SUBMISSION_ALREADY_COMPLETED"
+                  message:
+                    type: string
+                    example: "This threat has already been submitted with a score. Cannot resubmit."
+                  code:
+                    type: string
+                    example: "SUBMISSION_ALREADY_COMPLETED"
   /admin/umkm:
     get:
       summary: Get UMKM progress overview (Admin only)
