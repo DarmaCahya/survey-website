@@ -2,6 +2,21 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Strong typing for inlined seed data
+type BusinessProcessInput = { name: string; explanation?: string };
+type ThreatInput = {
+  id: number;
+  title: string;
+  description?: string;
+  business_processes?: BusinessProcessInput[];
+};
+type AssetInput = {
+  id: number;
+  "title-data": string;
+  description?: string;
+  threats: ThreatInput[];
+};
+
 /**
  * Seed script for UMKM Cyber Risk Survey with real data
  * Populates database with actual assets and threats based on provided data
@@ -23,7 +38,7 @@ async function seedRealData() {
     await prisma.asset.deleteMany();
 
     // Create assets and threats based on latest provided data (inlined)
-    const assetsData = [
+    const assetsData: AssetInput[] = [
       {
         id: 1,
         "title-data": "API / Integrasi Pihak Ketiga",
@@ -444,7 +459,9 @@ async function seedRealData() {
         });
         console.log(`  ⚠️ Created threat: ${threat.name}`);
 
-        const bps = Array.isArray((threatData as any).business_processes) ? (threatData as any).business_processes as { name: string; explanation?: string }[] : [];
+        const bps: BusinessProcessInput[] = Array.isArray(threatData.business_processes)
+          ? threatData.business_processes
+          : [];
         for (const bp of bps) {
           const name = bp.name.trim();
           let id = bpNameToId.get(name);

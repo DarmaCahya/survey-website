@@ -194,7 +194,7 @@ export async function POST(
     let payload: ThreatSubmissionPayload;
     try {
       payload = await request.json();
-    } catch (error) {
+    } catch (_error) {
       return createValidationErrorResponse('Invalid JSON payload');
     }
     
