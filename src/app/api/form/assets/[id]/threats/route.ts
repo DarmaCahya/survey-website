@@ -4,7 +4,6 @@ import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
-import { ThreatDescriptionService } from '@/lib/threat-description-service';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -14,7 +13,6 @@ import {
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
-const threatDescriptionService = new ThreatDescriptionService();
 
 /**
  * Get threats for a specific asset with user submission status
@@ -49,13 +47,17 @@ export async function GET(
       return handleApiError(new Error('Invalid asset ID'), 'Invalid asset ID');
     }
 
-    // Get asset with threats
     const asset = await db.asset.findUnique({
       where: { id: assetId },
       include: {
         threats: {
-          orderBy: {
-            name: 'asc'
+          orderBy: { name: 'asc' },
+          include: {
+            threatBusinessProcesses: {
+              include: {
+                businessProcess: { select: { name: true, description: true } }
+              }
+            }
           }
         }
       }
@@ -65,90 +67,28 @@ export async function GET(
       return handleApiError(new Error('Asset not found'), 'Asset not found');
     }
 
-    // Get user's submissions for this asset
-    const userSubmissions = await db.submission.findMany({
-      where: {
-        userId: user.id,
-        assetId: assetId
-      },
-      include: {
-        threat: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        score: true,
-        riskInput: true
-      }
-    });
+    // Note: submission status is not used in this endpoint's payload format
 
-    // Create a map of submissions by threat ID
-    const submissionsByThreat = userSubmissions.reduce((acc, submission) => {
-      acc[submission.threatId] = submission;
-      return acc;
-    }, {} as Record<number, typeof userSubmissions[0]>);
-
-    // Build threats with status
-    const threatsWithStatus = asset.threats.map(threat => {
-      const submission = submissionsByThreat[threat.id];
-      
-      let status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
-      let submissionData = null;
-
-      if (!submission) {
-        status = 'NOT_STARTED';
-      } else if (!submission.score) {
-        status = 'IN_PROGRESS';
-      } else {
-        status = 'COMPLETED';
-        
-        const threatDescription = threatDescriptionService.generateThreatDescription(
-          threat.name,
-          submission.score.category
-        );
-        
-        submissionData = {
-          submissionId: submission.id,
-          understand: submission.understand,
-          riskInput: submission.riskInput ? {
-            biaya_pengetahuan: submission.riskInput.f,
-            pengaruh_kerugian: submission.riskInput.g,
-            frekuensi_serangan: submission.riskInput.h,
-            pemulihan: submission.riskInput.i
-          } : null,
-          score: {
-            peluang: submission.score.peluang,
-            impact: submission.score.impact,
-            total: submission.score.total,
-            category: submission.score.category
-          },
-          threatDescription
-        };
-      }
+    // Build threats matching FE payload
+    const threatsPayload = asset.threats.map(threat => {
+      const business_processes = (threat.threatBusinessProcesses || []).map(tb => ({
+        name: tb.businessProcess.name,
+        explanation: tb.businessProcess.description ?? null
+      }));
 
       return {
         id: threat.id,
-        name: threat.name,
+        title: threat.name,
         description: threat.description,
-        status,
-        submission: submissionData
+        business_processes
       };
     });
 
     const response = {
-      asset: {
-        id: asset.id,
-        name: asset.name,
-        description: asset.description
-      },
-      threats: threatsWithStatus,
-      summary: {
-        total: asset.threats.length,
-        completed: threatsWithStatus.filter(t => t.status === 'COMPLETED').length,
-        inProgress: threatsWithStatus.filter(t => t.status === 'IN_PROGRESS').length,
-        notStarted: threatsWithStatus.filter(t => t.status === 'NOT_STARTED').length
-      }
+      id: asset.id,
+      'title-data': asset.name,
+      description: asset.description,
+      threats: threatsPayload
     };
 
     return createSuccessResponse(response, 'Threats retrieved successfully');
