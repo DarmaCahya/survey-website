@@ -1,8 +1,8 @@
 import { Question } from "@/types/survey";
 
-export const generateQuestions = (threatId: string): Question[] => [
+export const generateQuestions = (dynamicOptions: string[]): Question[] => [
     {
-        id: `${threatId}_biaya_pengetahuan`,
+        id: `biaya_pengetahuan`,
         text: "Biaya & Pengetahuan",
         description:
             "1: Perlu alat khusus dan biaya yang dikeluarkan pelaku tinggi.\n" +
@@ -18,7 +18,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         required: true,
     },
     {
-        id: `${threatId}_pengaruh_kerugian`,
+        id: `pengaruh_kerugian`,
         text: "Pengaruh & Kerugian",
         description:
             "1: Pengaruh asset kecil + kerugian kecil (<2% omzet)\n" +
@@ -34,7 +34,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         required: true,
     },
     {
-        id: `${threatId}_frekuensi_serangan`,
+        id: `frekuensi_serangan`,
         text: "Frekuensi Serangan",
         description:
             "1: Tidak relevan \n" +
@@ -50,7 +50,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         required: true,
     },
     {
-        id: `${threatId}_pemulihan`,
+        id: `pemulihan`,
         text: "Pemulihan",
         description:
             "2: Cukup mudah (8-12 jam, butuh sedikit waktu verifikasi)\n" +
@@ -63,7 +63,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         required: true,
     },
     {
-        id: `${threatId}_pemahaman_poin`,
+        id: `pemahaman_poin`,
         text: "Apakah anda mengerti tentang poin ini?",
         placeholder: "",
         type: "radio",
@@ -71,27 +71,22 @@ export const generateQuestions = (threatId: string): Question[] => [
         required: true,
     },
     {
-        id: `${threatId}_pemahaman_tidak_mengerti`,
+        id: `pemahaman_tidak_mengerti`,
         text: "Jika tidak mengerti, Poin apa yang tidak anda mengerti?",
         placeholder: "",
         type: "dropdown",
-        options: [
-        "Biaya & Pengetahuan",
-        "Pengaruh & Kerugian",
-        "Frekuensi Serangan",
-        "Pemulihan",
-        ],
+        options: dynamicOptions,
         required: false,
-        dependencyId: `${threatId}_pemahaman_poin`,  
+        dependencyId: `pemahaman_poin`,  
         dependencyValue: "Tidak Mengerti", 
     },
     {
-        id: `${threatId}_penjelasan_tidak_dipahami`,
+        id: `penjelasan_tidak_dipahami`,
         text: "Penjelasan tentang hal yang tidak dimengerti",
         placeholder: "Misal: saya tidak paham apa itu data pelanggan",
         type: "long",
         required: false,
-        dependencyId: `${threatId}_pemahaman_poin`,  
+        dependencyId: `pemahaman_poin`,  
         dependencyValue: "Tidak Mengerti", 
     },
 ];

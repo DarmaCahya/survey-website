@@ -9,14 +9,14 @@ export type ThreatData = {
     tidak_mengerti_description?: string;
 }
 
-type ThreatPayload = {
+export type ThreatPayload = {
     biaya_pengetahuan: number;
     pengaruh_kerugian: number;
-    frekuensi_serangan: number;
-    pemulihan: number;
+    Frekuensi_serangan: number;
+    Pemulihan: number;
     mengerti_poin: boolean;
-    tidak_mengerti?: string;
-    tidak_mengerti_description?: string;
+    Tidak_mengerti_poin?: string;
+    description_tidak_mengerti?: string;
 };
 
 export type Submission = {
@@ -58,7 +58,7 @@ export type Threat = {
 export type ThreatResponse = {
     asset: {
         id: number;
-        name: string;
+        "title-data": string;
         description: string;
     };
     threats: Threat[];

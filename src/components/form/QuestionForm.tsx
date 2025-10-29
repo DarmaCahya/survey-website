@@ -11,9 +11,6 @@ type Props = {
     questions: Question[];
     initialAnswers?: Answers;
     onSubmit: (answers: Answers) => void;
-    onBack?: () => void;
-    isFirst?: boolean;
-    isLast?: boolean;
 };
 
 export default function QuestionForm({
@@ -22,9 +19,6 @@ export default function QuestionForm({
     questions,
     initialAnswers = {},
     onSubmit,
-    onBack,
-    isFirst = false,
-    isLast = false,
 }: Props) {    
     const { startNextStep } = useNextStep();
 
@@ -78,26 +72,11 @@ export default function QuestionForm({
                         />
                     );
                 })}
-            </div>
-            <div id="form-navigation" className="flex justify-center gap-4 mt-6">
-                {!isFirst && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onBack}
-                    >
-                        Back
-                    </Button>
-                )}
 
-                <Button 
-                    type="submit" 
-                    id={isLast ? "submit-button" : ""} 
-                    className={`${isLast ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"} px-10`}
-                >
-                    {isLast ? "Submit" : "Next"}
+                <Button type="submit" className="mt-4 bg-purple-600 text-white hover:bg-purple-700">
+                    Kirim
                 </Button>
-            </div>        
+            </div>  
         </form>
     );
 }

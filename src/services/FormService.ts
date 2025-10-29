@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import { safeRequest } from "@/app/utils/safeRequest";
-import { SubmissionData } from "@/types/form"; 
+import { ThreatPayload } from "@/types/form"; 
 
 export const getAllForms = async () => {
     return safeRequest(async () => {
@@ -16,9 +16,9 @@ export const getThreatByFormId = async (id: string) => {
     });
 };
 
-export const makeSubmission = async (payload: SubmissionData) => {
+export const makeSubmission = async (payload: ThreatPayload, assetId: string, threatId: string) => {
     return safeRequest(async () => {
-        const response = await api.post("form/submissions", payload);
+        const response = await api.post(`form/submit-form/${assetId}/${threatId}`, payload);
         return response.data;
     });
 };
