@@ -45,12 +45,6 @@ export default function QuestionForm({
 
     return (
         <form onSubmit={handleSubmit} className="p-4">
-            <div id="form-header">
-                <h2 className="text-xl font-bold text-purple-500">{topic}</h2>
-                <p className="text-base font-normal text-justify break-word mb-4">
-                    {description}
-                </p>
-            </div>
             <div className="flex flex-col gap-6">
                 {questions.map((q) => {
                     let isVisible = true;

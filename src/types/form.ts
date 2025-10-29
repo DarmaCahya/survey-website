@@ -47,12 +47,18 @@ export type Form = {
 
 export type FormData = Form[];
 
+export type BusinessProcess = {
+    name: string;
+    explanation: string;
+};
+
 export type Threat = { 
     id: string; 
     name: string; 
     description?: string; 
     status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
     submission: SubmissionDescription;
+    business_processes?: BusinessProcess[]; 
 }
 
 export type ThreatResponse = {

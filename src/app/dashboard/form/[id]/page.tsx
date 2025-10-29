@@ -25,8 +25,19 @@ export default function SurveyPage() {
         startNextStep("formTour");
     }, [startNextStep]);
 
+    const LOCAL_STORAGE_KEY = (id: string) => `survey-draft-${id}`;
+
     const params = useParams();
     const id = params?.id as string;
+
+    useEffect(() => {
+    const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY(id));
+        if (savedDraft) {
+            const parsedDraft = JSON.parse(savedDraft);
+            setAllAnswers(parsedDraft.answers || {});
+            setCurrentIndex(parsedDraft.currentIndex || 0);
+        }
+    }, [id]);
 
     const [topics, setTopics] = useState<string[]>([]);
     const [description, setDescription] = useState<string[]>([]);
@@ -49,6 +60,11 @@ export default function SurveyPage() {
         }
     }, [loading, Threats]);
 
+    useEffect(() => {
+        const draft = { answers: allAnswers, currentIndex };
+        localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
+    }, [allAnswers, currentIndex, id]);
+
     const handleTopicSubmit = async (data: Answers) => {
         const topic = topics[currentIndex];
         const updatedAnswers = { ...allAnswers, [topic]: data };
@@ -70,8 +86,8 @@ export default function SurveyPage() {
                         Frekuensi_serangan: Number(ans[`${threatId}_frekuensi_serangan`]),
                         Pemulihan: Number(ans[`${threatId}_pemulihan`]),
                         mengerti_poin: ans[`${threatId}_pemahaman_poin`] === "Mengerti",
-                        tidak_mengerti: String(ans[`${threatId}_tidak_mengerti`] ?? ""),
-                        tidak_mengerti_description: String(ans[`${threatId}_tidak_mengerti_description`] ?? ""),
+                        tidak_mengerti: String(ans[`${threatId}_pemahaman_tidak_mengerti`] ?? ""),
+                        tidak_mengerti_description: String(ans[`${threatId}_penjelasan_tidak_dipahami`] ?? ""),
                     };
                 }),
             };
@@ -83,6 +99,7 @@ export default function SurveyPage() {
                 toast.success("Survey selesai! Data berhasil dikirim.");
                 await refetch();
                 queryClient.invalidateQueries({ queryKey: ["forms"] }); 
+                localStorage.removeItem(LOCAL_STORAGE_KEY(id));
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");
@@ -116,7 +133,16 @@ export default function SurveyPage() {
 
     const threatId = threatIds[currentIndex];
     const topic = topics[currentIndex];
-    const questions = generateQuestions(threatId);
+    const ThreatName = Threats?.asset.name;
+    const threat = Threats?.threats[currentIndex];
+    const businessProcessOptions = threat?.business_processes?.map(bp => bp.name) || [];
+
+    const OptionsAnswer = [
+        ThreatName || "Unknown Asset",
+        topic || "Unknown Topic",
+        ...businessProcessOptions
+    ]
+    const questions = generateQuestions(threatId, OptionsAnswer);
 
     return (
         <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-2xl p-4 my-10">
@@ -146,6 +172,27 @@ export default function SurveyPage() {
                 <p className="text-base font-normal text-justify text-black">
                     {Threats?.asset?.description}
                 </p>
+            </div>
+
+            <div id="form-header" className="mb-2 mx-4">
+                <h2 className="text-xl font-bold text-purple-500">{topic}</h2>
+                <p className="text-base font-normal text-justify break-word mb-4">
+                    {description[currentIndex]}
+                </p>
+                {threat?.business_processes?.length ? (
+                    <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                            Proses Bisnis Terkait:
+                        </h3>
+                        <ul className="list-disc list-inside text-gray-600">
+                            {threat.business_processes.map((bp, idx) => (
+                                <li key={idx}>
+                                    <span className="font-medium">{bp.name}:</span> {bp.explanation}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : null}
             </div>
             
             {completedForm && Threats?.threats.length > 0 ? (
