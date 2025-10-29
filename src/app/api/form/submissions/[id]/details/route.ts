@@ -55,11 +55,10 @@ export async function GET(
       return handleApiError(new Error('Invalid submission ID'), 'Invalid submission ID');
     }
 
-    // Get submission with all related data
+    // Get submission with related data (no riskInput/description in selects)
     const submission = await db.submission.findUnique({
       where: { id: submissionId },
       include: {
-        riskInput: true,
         score: true,
         user: {
           select: {
@@ -71,15 +70,13 @@ export async function GET(
         asset: {
           select: {
             id: true,
-            name: true,
-            description: true
+            name: true
           }
         },
         threat: {
           select: {
             id: true,
-            name: true,
-            description: true
+            name: true
           }
         },
         feedback: {
@@ -102,7 +99,7 @@ export async function GET(
       return createAuthErrorResponse('Unauthorized access to submission');
     }
 
-    // Construct clean and organized response
+    // Construct clean and organized response (no answers/description)
     const detailedResponse = {
       // Basic submission info
       id: submission.id,
@@ -119,69 +116,33 @@ export async function GET(
       // Asset and threat context
       asset: {
         id: submission.asset.id,
-        name: submission.asset.name,
-        description: submission.asset.description
+        name: submission.asset.name
       },
       
       threat: {
         id: submission.threat.id,
-        name: submission.threat.name,
-        description: submission.threat.description
+        name: submission.threat.name
       },
       
-      // Risk assessment answers
-      answers: {
-        biaya_pengetahuan: {
-          question: "Biaya & Pengetahuan",
-          description: "Seberapa besar biaya dan pengetahuan yang dibutuhkan untuk mengatasi ancaman ini?",
-          answer: submission.riskInput?.f || null,
-          scale: "1-6",
-          meaning: submission.riskInput?.f ? getBiayaPengetahuanMeaning(submission.riskInput.f) : null
-        },
-        pengaruh_kerugian: {
-          question: "Pengaruh & Kerugian",
-          description: "Seberapa besar pengaruh dan kerugian jika ancaman ini terjadi?",
-          answer: submission.riskInput?.g || null,
-          scale: "1-6",
-          meaning: submission.riskInput?.g ? getPengaruhKerugianMeaning(submission.riskInput.g) : null
-        },
-        frekuensi_serangan: {
-          question: "Frekuensi Serangan",
-          description: "Seberapa sering ancaman ini terjadi berdasarkan pengalaman?",
-          answer: submission.riskInput?.h || null,
-          scale: "1-6",
-          meaning: submission.riskInput?.h ? getFrekuensiSeranganMeaning(submission.riskInput.h) : null
-        },
-        pemulihan: {
-          question: "Pemulihan",
-          description: "Seberapa cepat Anda bisa pulih jika ancaman ini terjadi?",
-          answer: submission.riskInput?.i || null,
-          scale: "2/4/6",
-          meaning: submission.riskInput?.i ? getPemulihanMeaning(submission.riskInput.i) : null
-        },
-        understanding: {
-          question: "Pemahaman Ancaman",
-          description: "Apakah Anda memahami ancaman ini dengan baik?",
-          answer: submission.understand,
-          meaning: submission.understand === 'MENGERTI' ? 'Mengerti' : 'Tidak Mengerti'
-        }
-      },
+      // No risk assessment answers in response
       
       // Calculated risk scores
       riskScore: submission.score ? {
         peluang: submission.score.peluang,
         impact: submission.score.impact,
         total: submission.score.total,
-        category: submission.score.category,
-        interpretation: getRiskCategoryInterpretation(submission.score.category),
-        formula: {
-          peluang: "((Biaya_Pengetahuan*2)+(Pengaruh_Kerugian*2)+Frekuensi_Serangan+Pemulihan)/6",
-          impact: "(Frekuensi_Serangan+Pemulihan)/2",
-          total: "ROUND(Peluang*Impact, 0)",
-          category: "IF(Total<=15,'LOW', IF(Total<=25,'MEDIUM','HIGH'))"
-        }
+        category: submission.score.category
       } : null,
       
+      // Sanitized threatDescription (no description text)
+      threatDescription: submission.score?.threatDescription ? {
+        threatName: (submission.score.threatDescription as any).threatName,
+        recommendations: (submission.score.threatDescription as any).recommendations,
+        priority: (submission.score.threatDescription as any).priority,
+        actionRequired: (submission.score.threatDescription as any).actionRequired,
+        category: (submission.score.threatDescription as any).category
+      } : null,
+
       // Additional feedback if any
       feedback: submission.feedback.length > 0 ? submission.feedback : null
     };
