@@ -249,7 +249,7 @@ export async function POST(
       await formProgressRepository.updateProgress(user.id, assetId, 'IN_PROGRESS' as FormStatus);
     }
     
-    // Submit inputs and calculate scores
+    // Submit inputs and calculate scores (skip automatic progress update)
     const result = await umkmSurveyService.submitInputs(user.id, submissionId, {
       biaya_pengetahuan: payload.biaya_pengetahuan,
       pengaruh_kerugian: payload.pengaruh_kerugian,
@@ -258,7 +258,29 @@ export async function POST(
       mengerti_poin: payload.mengerti_poin,
       Tidak_mengerti_poin: payload.Tidak_mengerti_poin,
       description_tidak_mengerti: payload.description_tidak_mengerti
+    }, true); // Skip automatic progress update
+    
+    // Check if all threats for this asset are now completed
+    const completedSubmissions = await db.submission.count({
+      where: {
+        userId: user.id,
+        assetId: assetId,
+        score: { isNot: null }
+      }
     });
+    
+    const totalThreats = await db.threat.count({
+      where: { assetId: assetId }
+    });
+    
+    // Update progress based on actual completion status
+    if (completedSubmissions === totalThreats) {
+      // All threats completed
+      await formProgressRepository.updateProgress(user.id, assetId, 'SUBMITTED' as FormStatus);
+    } else {
+      // Some threats still incomplete - keep IN_PROGRESS
+      await formProgressRepository.updateProgress(user.id, assetId, 'IN_PROGRESS' as FormStatus);
+    }
     
     return createSuccessResponse({
       submissionId,

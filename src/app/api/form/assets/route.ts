@@ -90,13 +90,13 @@ export async function GET(request: NextRequest) {
       const totalThreats = asset.threats.length;
       const completedThreats = assetSubmissions.filter(s => s.score).length;
       
-      let status: 'NOT_STARTED' | 'COMPLETED';
+      let status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
       if (completedThreats === 0) {
         status = 'NOT_STARTED';
       } else if (completedThreats === totalThreats) {
         status = 'COMPLETED';
       } else {
-        status = 'NOT_STARTED'; // Partial completion treated as not started
+        status = 'IN_PROGRESS'; // Partial completion
       }
 
       return {
@@ -108,7 +108,8 @@ export async function GET(request: NextRequest) {
         progress: {
           total: totalThreats,
           completed: completedThreats,
-          notStarted: totalThreats - completedThreats
+          inProgress: assetSubmissions.filter(s => !s.score).length,
+          notStarted: totalThreats - assetSubmissions.length
         },
         threats: asset.threats.map(threat => ({
           id: threat.id,

@@ -19,7 +19,7 @@ import {
   createAuthErrorResponse,
   validateRequestBody 
 } from '@/lib/error-handler';
-import { SubmitInputsRequest } from '@/types/risk';
+import { SubmitInputsRequest, FormStatus } from '@/types/risk';
 
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
@@ -106,7 +106,37 @@ export async function POST(
       description_tidak_mengerti: body.description_tidak_mengerti
     };
 
-    const result = await umkmSurveyService.submitInputs(user.id, submissionId, inputsRequest);
+    // Skip automatic progress update, we'll handle it manually
+    const result = await umkmSurveyService.submitInputs(user.id, submissionId, inputsRequest, true);
+    
+    // Get submission to find assetId
+    const submission = await submissionRepository.findById(submissionId);
+    if (!submission) {
+      return handleApiError(new Error('Submission not found'), 'Submission not found');
+    }
+    
+    // Check if all threats for this asset are now completed
+    const completedSubmissions = await db.submission.count({
+      where: {
+        userId: user.id,
+        assetId: submission.assetId,
+        score: { isNot: null }
+      }
+    });
+    
+    const totalThreats = await db.threat.count({
+      where: { assetId: submission.assetId }
+    });
+    
+    // Update progress based on actual completion status
+    if (completedSubmissions === totalThreats) {
+      // All threats completed
+      await formProgressRepository.updateProgress(user.id, submission.assetId, FormStatus.SUBMITTED);
+    } else {
+      // Some threats still incomplete - keep IN_PROGRESS
+      await formProgressRepository.updateProgress(user.id, submission.assetId, FormStatus.IN_PROGRESS);
+    }
+    
     return createSuccessResponse(result, 'Inputs submitted successfully');
 
   } catch (error) {
