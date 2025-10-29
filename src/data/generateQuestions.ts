@@ -1,6 +1,6 @@
 import { Question } from "@/types/survey";
 
-export const generateQuestions = (threatId: string): Question[] => [
+export const generateQuestions = (threatId: string, dynamicOptions: string[]): Question[] => [
     {
         id: `${threatId}_biaya_pengetahuan`,
         text: "Biaya & Pengetahuan",
@@ -75,12 +75,7 @@ export const generateQuestions = (threatId: string): Question[] => [
         text: "Jika tidak mengerti, Poin apa yang tidak anda mengerti?",
         placeholder: "",
         type: "dropdown",
-        options: [
-        "Biaya & Pengetahuan",
-        "Pengaruh & Kerugian",
-        "Frekuensi Serangan",
-        "Pemulihan",
-        ],
+        options: dynamicOptions,
         required: false,
         dependencyId: `${threatId}_pemahaman_poin`,  
         dependencyValue: "Tidak Mengerti", 
