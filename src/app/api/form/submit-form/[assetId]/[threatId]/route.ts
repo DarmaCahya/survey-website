@@ -95,7 +95,7 @@ function validateRiskInputs(payload: ThreatSubmissionPayload): void {
   
   // Validate Pemulihan (2/4/6)
   if (!Number.isInteger(Pemulihan) || 
-      !VALIDATION.INPUT_RANGES.Pemulihan.allowed.includes(Pemulihan)) {
+      !VALIDATION.INPUT_RANGES.Pemulihan.allowed.includes(Pemulihan as 2 | 4 | 6)) {
     throw new InvalidRiskInputError('Pemulihan', Pemulihan, '2, 4, or 6');
   }
 }
@@ -296,14 +296,14 @@ export async function POST(
       submittedAt: new Date().toISOString()
     }, 'Threat assessment submitted successfully');
     
-  } catch (error) {
+  } catch (err) {
     // Handle specific validation errors
-    if (error instanceof InvalidRiskInputError) {
+    if (err instanceof InvalidRiskInputError) {
       return NextResponse.json(
         {
           success: false,
           error: 'INVALID_RISK_INPUT',
-          message: error.message,
+          message: err.message,
           code: 'INVALID_RISK_INPUT'
         },
         { status: 400 }
@@ -311,6 +311,6 @@ export async function POST(
     }
     
     // Generic error handling
-    return handleApiError(error, 'Failed to submit threat assessment');
+    return handleApiError(err, 'Failed to submit threat assessment');
   }
 }
