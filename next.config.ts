@@ -3,11 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
   
-  // Experimental features
-  experimental: {
-    // Enable server components logging
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  // External packages for server components
+  serverExternalPackages: ['@prisma/client'],
   
   // Image optimization
   images: {

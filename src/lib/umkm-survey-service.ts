@@ -35,7 +35,7 @@ export interface IUMKMSurveyService {
   getAssetThreats(assetId: number): Promise<ThreatResponse[]>;
   createSubmission(userId: number, request: CreateSubmissionRequest): Promise<CreateSubmissionResponse>;
   createBatchSubmission(userId: number, request: BatchSubmissionRequest): Promise<BatchSubmissionResponse>;
-  submitInputs(userId: number, submissionId: number, request: SubmitInputsRequest): Promise<SubmitInputsResponse>;
+  submitInputs(userId: number, submissionId: number, request: SubmitInputsRequest, skipProgressUpdate?: boolean): Promise<SubmitInputsResponse>;
   getScore(userId: number, submissionId: number): Promise<GetScoreResponse>;
   getUMKMProgress(): Promise<UMKMProgressResponse[]>;
 }
@@ -293,7 +293,8 @@ export class UMKMSurveyService implements IUMKMSurveyService {
   async submitInputs(
     userId: number, 
     submissionId: number, 
-    request: SubmitInputsRequest
+    request: SubmitInputsRequest,
+    skipProgressUpdate: boolean = false
   ): Promise<SubmitInputsResponse> {
     // Get submission and validate ownership
     const submission = await this.submissionRepository.findById(submissionId);
@@ -387,12 +388,14 @@ export class UMKMSurveyService implements IUMKMSurveyService {
         );
       }
 
-      // Update form progress to submitted
-      await this.formProgressRepository.updateProgress(
-        userId,
-        submission.assetId,
-        FormStatus.SUBMITTED
-      );
+      // Update form progress to submitted (unless skipped)
+      if (!skipProgressUpdate) {
+        await this.formProgressRepository.updateProgress(
+          userId,
+          submission.assetId,
+          FormStatus.SUBMITTED
+        );
+      }
 
       return {
         peluang: scoreWithContext.peluang,
