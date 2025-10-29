@@ -4,7 +4,6 @@ import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
-import { ThreatDescriptionService } from '@/lib/threat-description-service';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -14,7 +13,6 @@ import {
 // Initialize services with dependency injection
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
-const threatDescriptionService = new ThreatDescriptionService();
 
 /**
  * Get threats for a specific asset with user submission status
@@ -69,29 +67,7 @@ export async function GET(
       return handleApiError(new Error('Asset not found'), 'Asset not found');
     }
 
-    // Get user's submissions for this asset
-    const userSubmissions = await db.submission.findMany({
-      where: {
-        userId: user.id,
-        assetId: assetId
-      },
-      include: {
-        threat: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        score: true,
-        riskInput: true
-      }
-    });
-
-    // Create a map of submissions by threat ID
-    const submissionsByThreat = userSubmissions.reduce((acc, submission) => {
-      acc[submission.threatId] = submission;
-      return acc;
-    }, {} as Record<number, typeof userSubmissions[0]>);
+    // Note: submission status is not used in this endpoint's payload format
 
     // Build threats matching FE payload
     const threatsPayload = asset.threats.map(threat => {

@@ -135,13 +135,7 @@ export async function GET(
       } : null,
       
       // Sanitized threatDescription (no description text)
-      threatDescription: submission.score?.threatDescription ? {
-        threatName: (submission.score.threatDescription as any).threatName,
-        recommendations: (submission.score.threatDescription as any).recommendations,
-        priority: (submission.score.threatDescription as any).priority,
-        actionRequired: (submission.score.threatDescription as any).actionRequired,
-        category: (submission.score.threatDescription as any).category
-      } : null,
+      threatDescription: sanitizeThreatDescription(submission.score?.threatDescription, submission.threat.name, submission.score?.category),
 
       // Additional feedback if any
       feedback: submission.feedback.length > 0 ? submission.feedback : null
@@ -154,57 +148,29 @@ export async function GET(
   }
 }
 
-// Helper functions to provide meaning for each answer
-function getBiayaPengetahuanMeaning(value: number): string {
-  const meanings = {
-    1: "Sangat Rendah - Biaya dan pengetahuan minimal",
-    2: "Rendah - Biaya dan pengetahuan kecil",
-    3: "Sedang - Biaya dan pengetahuan sedang",
-    4: "Tinggi - Biaya dan pengetahuan besar",
-    5: "Sangat Tinggi - Biaya dan pengetahuan sangat besar",
-    6: "Kritis - Biaya dan pengetahuan maksimal"
-  };
-  return meanings[value as keyof typeof meanings] || "Unknown";
+// Sanitize and type threatDescription JSON
+type RiskCategory = 'LOW' | 'MEDIUM' | 'HIGH';
+interface SanitizedThreatDescription {
+  threatName: string;
+  recommendations: string[];
+  priority: RiskCategory;
+  actionRequired: boolean;
+  category: RiskCategory;
 }
 
-function getPengaruhKerugianMeaning(value: number): string {
-  const meanings = {
-    1: "Minimal - Pengaruh dan kerugian sangat kecil",
-    2: "Kecil - Pengaruh dan kerugian kecil",
-    3: "Sedang - Pengaruh dan kerugian sedang",
-    4: "Besar - Pengaruh dan kerugian besar",
-    5: "Sangat Besar - Pengaruh dan kerugian sangat besar",
-    6: "Kritis - Pengaruh dan kerugian maksimal"
-  };
-  return meanings[value as keyof typeof meanings] || "Unknown";
-}
-
-function getFrekuensiSeranganMeaning(value: number): string {
-  const meanings = {
-    1: "Jarang Sekali - Hampir tidak pernah terjadi",
-    2: "Jarang - Jarang terjadi",
-    3: "Kadang-kadang - Kadang terjadi",
-    4: "Sering - Sering terjadi",
-    5: "Sangat Sering - Sangat sering terjadi",
-    6: "Terus Menerus - Terus menerus terjadi"
-  };
-  return meanings[value as keyof typeof meanings] || "Unknown";
-}
-
-function getPemulihanMeaning(value: number): string {
-  const meanings = {
-    2: "Cepat Pulih - Bisa pulih dalam waktu singkat",
-    4: "Sedang Pulih - Butuh waktu sedang untuk pulih",
-    6: "Lambat Pulih - Butuh waktu lama untuk pulih"
-  };
-  return meanings[value as keyof typeof meanings] || "Unknown";
-}
-
-function getRiskCategoryInterpretation(category: string): string {
-  const interpretations = {
-    'LOW': 'Risiko Rendah - Ancaman dapat dikelola dengan mudah',
-    'MEDIUM': 'Risiko Sedang - Perlu perhatian dan monitoring',
-    'HIGH': 'Risiko Tinggi - Memerlukan tindakan segera dan prioritas tinggi'
-  };
-  return interpretations[category as keyof typeof interpretations] || "Unknown";
+function sanitizeThreatDescription(
+  input: unknown,
+  fallbackThreatName: string,
+  fallbackCategory?: string | null
+): SanitizedThreatDescription | null {
+  if (!input || typeof input !== 'object') return null;
+  const obj = input as Record<string, unknown>;
+  const threatName = typeof obj.threatName === 'string' ? obj.threatName : fallbackThreatName;
+  const recommendations = Array.isArray(obj.recommendations)
+    ? (obj.recommendations.filter((r) => typeof r === 'string') as string[])
+    : [];
+  const priority = (obj.priority as RiskCategory) ?? 'LOW';
+  const actionRequired = typeof obj.actionRequired === 'boolean' ? obj.actionRequired : false;
+  const category = ((obj.category as RiskCategory) ?? (fallbackCategory as RiskCategory) ?? 'LOW');
+  return { threatName, recommendations, priority, actionRequired, category };
 }
