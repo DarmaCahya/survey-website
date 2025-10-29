@@ -49,13 +49,22 @@ export async function GET(
       return handleApiError(new Error('Invalid asset ID'), 'Invalid asset ID');
     }
 
-    // Get asset with threats
+    // Get asset with threats and their business processes
     const asset = await db.asset.findUnique({
       where: { id: assetId },
       include: {
         threats: {
           orderBy: {
             name: 'asc'
+          },
+          include: {
+            threatBusinessProcesses: {
+              include: {
+                businessProcess: {
+                  select: { name: true, description: true }
+                }
+              }
+            }
           }
         }
       }
@@ -127,10 +136,17 @@ export async function GET(
         };
       }
 
+      // Map business processes attached to this threat (addition only)
+      const business_processes = (threat.threatBusinessProcesses || []).map(tb => ({
+        name: tb.businessProcess.name,
+        explanation: tb.businessProcess.description ?? null
+      }));
+
       return {
         id: threat.id,
         name: threat.name,
         description: threat.description,
+        business_processes,
         status,
         submission: submissionData
       };
