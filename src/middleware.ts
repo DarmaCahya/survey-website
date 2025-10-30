@@ -14,7 +14,8 @@ export async function middleware(req: NextRequest) {
         }
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify`, {
+            const verifyUrl = new URL('/api/auth/verify', req.nextUrl.origin);
+            const res = await fetch(verifyUrl.toString(), {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`,
