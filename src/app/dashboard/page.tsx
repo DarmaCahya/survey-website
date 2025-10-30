@@ -25,6 +25,7 @@ export default function Dashboard() {
             await logout();
             router.push("/auth/login");
         } catch (error) {
+            console.error(error);
             toast.error("Logout failed");
         }
     };

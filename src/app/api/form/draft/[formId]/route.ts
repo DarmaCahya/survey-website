@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/database"; // Pastikan path ini sesuai dengan lokasi database kamu
 
 // Handler untuk POST (simpan atau update draft survey)
-export async function POST(req: NextRequest, { params }: { params: { formId: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ formId: string }> }) {
   try {
     // Ambil formId dari params dan userId serta data lainnya dari request body
-    const { formId } = params;
+    const { formId } = await context.params;
     const { userId, answers, currentIndex } = await req.json();
 
     // Pastikan userId ada, answers ada, dan currentIndex adalah angka
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest, { params }: { params: { formId: str
 }
 
 // Handler untuk GET (ambil draft survey)
-export async function GET(req: NextRequest, { params }: { params: { formId: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ formId: string }> }) {
   try {
-    const { formId } = params;
+    const { formId } = await context.params;
     // Ambil userId dari header dan konversi ke Number
     const userId = Number(req.headers.get("x-user-id"));
     
@@ -59,9 +59,9 @@ export async function GET(req: NextRequest, { params }: { params: { formId: stri
 }
 
 // Handler untuk DELETE (hapus draft survey)
-export async function DELETE(req: NextRequest, { params }: { params: { formId: string } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ formId: string }> }) {
   try {
-    const { formId } = params;
+    const { formId } = await context.params; 
     // Ambil userId dari header dan konversi ke Number
     const userId = Number(req.headers.get("x-user-id"));
     

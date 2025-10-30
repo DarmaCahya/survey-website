@@ -35,7 +35,6 @@ export default function SurveyPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [draftLoaded, setDraftLoaded] = useState(false);
 
     const { Threats, loading, error, refetch } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
@@ -296,8 +295,6 @@ export default function SurveyPage() {
                 <div className="relative" id="form-questions">
                     <QuestionForm
                         key={topic}
-                        description={description[currentIndex]}
-                        topic={topic}
                         questions={questions}
                         answers={currentAnswers}  
                         onSubmit={handleTopicSubmit}
