@@ -24,11 +24,10 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.simple
+      dockerfile: Dockerfile
     container_name: survey-app
     restart: unless-stopped
     environment:
-      NODE_ENV: development
       DATABASE_URL: postgres://postgres:postgres123@postgres:5432/survey_database?sslmode=disable
       JWT_SECRET: 8bee05d9f05b1d367ed47f9da766521c
       ADMIN_PIN: akanselesai2025
@@ -53,7 +52,7 @@ services:
         echo 'Seeding database...' &&
         npm run db:seed || echo 'Seed skipped or failed' &&
         echo 'Starting application...' &&
-        npm run dev
+        npm start
       "
 
 volumes:
