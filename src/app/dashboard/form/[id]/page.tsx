@@ -138,9 +138,11 @@ export default function SurveyPage() {
     const businessProcessOptions = threat?.business_processes?.map(bp => bp.name) || [];
 
     const OptionsAnswer = [
-        ThreatName || "Unknown Asset",
-        topic || "Unknown Topic",
-        ...businessProcessOptions
+        `Jenis Data : ${ThreatName || "Unknown Asset"}`,
+        `Jenis Serangan : ${topic || "Unknown Topic"}`,
+        `Proses Bisnis : ${(businessProcessOptions && businessProcessOptions.length > 0) 
+            ? businessProcessOptions.join(", ") 
+            : "Unknown Process"}`
     ]
     const questions = generateQuestions(threatId, OptionsAnswer);
 

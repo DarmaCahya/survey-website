@@ -96,7 +96,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                 <select
                     value={(value as string) || ""}
                     onChange={(e) => onChange(e.target.value)}
-                    className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 bg-white transition-all duration-200"
+                    className="max-w-xl border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 bg-white transition-all duration-200"
                     required={question.required}
                 >
                     <option value="">Pilih</option>
