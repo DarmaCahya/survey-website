@@ -177,6 +177,10 @@ export default function SurveyPage() {
             }
 
             const data = await response.json();
+
+            if (!data || !data.draft) {
+                return;
+            }
             if (data.draft.answers) {
                 setAllAnswers(data.draft.answers);
                 setCurrentIndex(data.currentIndex || 0);
