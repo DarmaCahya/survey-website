@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { generateQuestions } from "@/data/generateQuestions";
 import QuestionForm from "@/components/form/QuestionForm";
@@ -21,7 +21,7 @@ export default function SurveyPage() {
     const { startNextStep } = useNextStep();
     const queryClient = useQueryClient();
 
-    React.useEffect(() => {
+    useEffect(() => {
         startNextStep("formTour");
     }, [startNextStep]);
 
@@ -30,13 +30,16 @@ export default function SurveyPage() {
     const params = useParams();
     const id = params?.id as string;
 
+    const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+
     useEffect(() => {
-    const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY(id));
+        const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY(id));
         if (savedDraft) {
             const parsedDraft = JSON.parse(savedDraft);
             setAllAnswers(parsedDraft.answers || {});
             setCurrentIndex(parsedDraft.currentIndex || 0);
         }
+        setIsDraftLoaded(true);
     }, [id]);
 
     const [topics, setTopics] = useState<string[]>([]);
@@ -61,9 +64,20 @@ export default function SurveyPage() {
     }, [loading, Threats]);
 
     useEffect(() => {
+        if (!id) return;
         const draft = { answers: allAnswers, currentIndex };
         localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
     }, [allAnswers, currentIndex, id]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            const draft = { answers: allAnswers, currentIndex };
+            localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [allAnswers, currentIndex, id]);
+
 
     const handleTopicSubmit = async (data: Answers) => {
         const topic = topics[currentIndex];
@@ -113,6 +127,8 @@ export default function SurveyPage() {
     const handleBack = () => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     };
+    const topic = topics[currentIndex];
+    const currentAnswers = useMemo(() => allAnswers[topic] || {}, [allAnswers, topic]);
 
     if (loading || topics.length === 0) {
         return (
@@ -132,7 +148,6 @@ export default function SurveyPage() {
     }
 
     const threatId = threatIds[currentIndex];
-    const topic = topics[currentIndex];
     const ThreatName = Threats?.asset.name;
     const threat = Threats?.threats[currentIndex];
     const businessProcessOptions = threat?.business_processes?.map(bp => bp.name) || [];
@@ -146,6 +161,14 @@ export default function SurveyPage() {
     ]
     const questions = generateQuestions(threatId, OptionsAnswer);
 
+    if (!isDraftLoaded || loading || topics.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <Spinner className="w-12 h-12 text-purple-600 mb-4" />
+                <p className="text-gray-500 text-lg animate-pulse">Loading survey...</p>
+            </div>
+        );
+    }
     return (
         <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-2xl p-4 my-10">
             <div className="mb-4 flex items-center justify-between mx-4 py-2">
@@ -206,8 +229,17 @@ export default function SurveyPage() {
                         description={description[currentIndex]}
                         topic={topic}
                         questions={questions}
-                        initialAnswers={allAnswers[topic]}
+                        answers={currentAnswers}  
                         onSubmit={handleTopicSubmit}
+                        onAnswerChange={(id, value) => {
+                            setAllAnswers((prev) => ({
+                                ...prev,
+                                [topic]: {
+                                    ...prev[topic],
+                                    [id]: value,
+                                }
+                            }));
+                        }}
                         onBack={handleBack}
                         isFirst={currentIndex === 0}
                         isLast={currentIndex === topics.length - 1}

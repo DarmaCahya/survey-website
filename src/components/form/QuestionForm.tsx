@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Question, Answers } from "@/types/survey";
 import QuestionItem from "./QuestionItem";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ type Props = {
     topic: string;
     description: string;
     questions: Question[];
-    initialAnswers?: Answers;
+    answers: Answers; 
+    onAnswerChange: (id: string, value: string | number) => void; 
     onSubmit: (answers: Answers) => void;
     onBack?: () => void;
     isFirst?: boolean;
@@ -20,7 +21,8 @@ export default function QuestionForm({
     topic,
     description,
     questions,
-    initialAnswers = {},
+    answers,
+    onAnswerChange,
     onSubmit,
     onBack,
     isFirst = false,
@@ -28,20 +30,32 @@ export default function QuestionForm({
 }: Props) {    
     const { startNextStep } = useNextStep();
 
-    React.useEffect(() => {
+    useEffect(() => {
         startNextStep("formTour");
     }, [startNextStep]);
+    const [localAnswers, setLocalAnswers] = useState<Answers>(answers);
+    const prevInitialAnswers = React.useRef<Answers>({});
 
-    const [answers, setAnswers] = useState<Answers>(initialAnswers);
 
     const handleChange = (id: string, value: string | number) => {
-        setAnswers((prev) => ({ ...prev, [id]: value }));
+        setLocalAnswers(prev => ({ ...prev, [id]: value }));
+        onAnswerChange(id, value);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit(answers);
     };
+
+    useEffect(() => {
+        const same =
+            JSON.stringify(prevInitialAnswers.current) === JSON.stringify(answers);
+
+        if (!same) {
+            setLocalAnswers(answers);
+            prevInitialAnswers.current = answers;
+        }
+    }, [answers]);
 
     return (
         <form onSubmit={handleSubmit} className="p-4">
