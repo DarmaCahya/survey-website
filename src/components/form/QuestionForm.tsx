@@ -44,7 +44,7 @@ export default function QuestionForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(answers);
+        onSubmit(localAnswers);
     };
 
     useEffect(() => {

@@ -8,21 +8,20 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
-  passwordHash      String
-  name              String?
-  isActive          Boolean  @default(true)
-  refreshToken      String?  @unique
-  refreshTokenExp   DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  // Relations
-  responses         Response[]
-  formProgress      FormProgress[]
-  submissions       Submission[]
-  
+  id              Int            @id @default(autoincrement())
+  email           String         @unique
+  passwordHash    String
+  name            String?
+  isActive        Boolean        @default(true)
+  refreshToken    String?        @unique
+  refreshTokenExp DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  draftSurveys    DraftSurvey[]
+  formProgress    FormProgress[]
+  responses       Response[]
+  submissions     Submission[]
+
   @@map("users")
 }
 
@@ -33,66 +32,55 @@ model Response {
   answers   Json
   userId    Int?
   createdAt DateTime @default(now())
-  
-  // Relations
   user      User?    @relation(fields: [userId], references: [id])
-  
+
   @@map("responses")
 }
 
-// UMKM Cyber Risk Survey Models
 model Asset {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  threats         Threat[]
-  formProgress    FormProgress[]
-  submissions     Submission[]
-  
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  formProgress FormProgress[]
+  submissions  Submission[]
+  threats      Threat[]
+
   @@map("assets")
 }
 
 model Threat {
-  id          Int      @id @default(autoincrement())
-  assetId     Int
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  asset                   Asset                    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  threatBusinessProcesses ThreatBusinessProcess[]
+  id                      Int                     @id @default(autoincrement())
+  assetId                 Int
+  name                    String
+  description             String?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
   submissions             Submission[]
-  
+  threatBusinessProcesses ThreatBusinessProcess[]
+  asset                   Asset                   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
   @@map("threats")
 }
 
 model BusinessProcess {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
+  id                      Int                     @id @default(autoincrement())
+  name                    String
+  description             String?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
   threatBusinessProcesses ThreatBusinessProcess[]
-  
+
   @@map("business_processes")
 }
 
 model ThreatBusinessProcess {
-  threatId         Int
+  threatId          Int
   businessProcessId Int
-  
-  // Relations
-  threat           Threat           @relation(fields: [threatId], references: [id], onDelete: Cascade)
-  businessProcess   BusinessProcess  @relation(fields: [businessProcessId], references: [id], onDelete: Cascade)
-  
+  businessProcess   BusinessProcess @relation(fields: [businessProcessId], references: [id], onDelete: Cascade)
+  threat            Threat          @relation(fields: [threatId], references: [id], onDelete: Cascade)
+
   @@id([threatId, businessProcessId])
   @@map("threat_business_processes")
 }
@@ -102,88 +90,83 @@ model FormProgress {
   assetId   Int
   status    FormStatus @default(NOT_STARTED)
   updatedAt DateTime   @updatedAt
-  
-  // Relations
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  
+  asset     Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([userId, assetId])
   @@map("form_progress")
 }
 
 model Submission {
-  id          Int           @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   userId      Int
   assetId     Int
   threatId    Int
   understand  UnderstandLevel
-  submittedAt DateTime      @default(now())
-  
-  // Relations
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset    Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  threat   Threat      @relation(fields: [threatId], references: [id], onDelete: Cascade)
-  riskInput RiskInput?
-  score    Score?
-  feedback Feedback[]
-  
-  // Constraint: 1 user hanya bisa submit 1 kali per asset-threat combination
+  submittedAt DateTime        @default(now())
+  feedback    Feedback[]
+  riskInput   RiskInput?
+  score       Score?
+  asset       Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  threat      Threat          @relation(fields: [threatId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, assetId, threatId])
   @@map("submissions")
 }
 
 model RiskInput {
-  submissionId Int @id
-  
-  // Risk assessment inputs - Updated enum meanings
-  f Int // Peluang Serangan (1-6)
-  g Int // Impact (1-6)
-  h Int // Total Resiko (1-6)
-  i Int // Kategori Risiko (2/4/6)
-  
-  // Relations
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+  submissionId Int        @id
+  f            Int
+  g            Int
+  h            Int
+  i            Int
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
   @@map("risk_inputs")
 }
 
 model Score {
-  submissionId Int @id
-  
-  // Calculated scores
-  peluang  Float      // J (Peluang Serangan)
-  impact   Float      // K (Impact)
-  total    Int        // L (Total Resiko)
-  category RiskCategory // M (Kategori)
-  
-  // Threat-specific description and recommendations
-  threatDescription Json? // Stores threat-specific description, recommendations, priority, actionRequired
-  
-  // Relations
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+  submissionId      Int          @id
+  peluang           Float
+  impact            Float
+  total             Int
+  category          RiskCategory
+  threatDescription Json?
+  submission        Submission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
   @@map("scores")
 }
 
 model Feedback {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   submissionId Int
   field        String
   message      String
-  createdAt    DateTime @default(now())
-  
-  // Relations
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  
+  createdAt    DateTime   @default(now())
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
   @@map("feedback")
 }
 
-// Enums
+model DraftSurvey {
+  userId       Int
+  formId       Int
+  answers      Json
+  currentIndex Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, formId])
+  @@map("draft_surveys")
+}
+
 enum FormStatus {
   NOT_STARTED
   IN_PROGRESS
   SUBMITTED
-  
+
   @@map("form_status")
 }
 
@@ -191,13 +174,13 @@ enum RiskCategory {
   LOW
   MEDIUM
   HIGH
-  
+
   @@map("risk_category")
 }
 
 enum UnderstandLevel {
   MENGERTI
   TIDAK_MENGERTI
-  
+
   @@map("understand_level")
 }

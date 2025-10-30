@@ -16,31 +16,18 @@ import RiskSummary from "@/components/form/RiskSummary";
 import { useNextStep } from "nextstepjs";
 import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Cookies from "js-cookie";
 
 export default function SurveyPage() {
     const { startNextStep } = useNextStep();
     const queryClient = useQueryClient();
-
+    
     useEffect(() => {
         startNextStep("formTour");
     }, [startNextStep]);
 
-    const LOCAL_STORAGE_KEY = (id: string) => `survey-draft-${id}`;
-
     const params = useParams();
     const id = params?.id as string;
-
-    const [isDraftLoaded, setIsDraftLoaded] = useState(false);
-
-    useEffect(() => {
-        const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY(id));
-        if (savedDraft) {
-            const parsedDraft = JSON.parse(savedDraft);
-            setAllAnswers(parsedDraft.answers || {});
-            setCurrentIndex(parsedDraft.currentIndex || 0);
-        }
-        setIsDraftLoaded(true);
-    }, [id]);
 
     const [topics, setTopics] = useState<string[]>([]);
     const [description, setDescription] = useState<string[]>([]);
@@ -48,6 +35,7 @@ export default function SurveyPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [draftLoaded, setDraftLoaded] = useState(false);
 
     const { Threats, loading, error, refetch } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
@@ -62,22 +50,6 @@ export default function SurveyPage() {
             setThreatIds(threatIds); 
         }
     }, [loading, Threats]);
-
-    useEffect(() => {
-        if (!id) return;
-        const draft = { answers: allAnswers, currentIndex };
-        localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
-    }, [allAnswers, currentIndex, id]);
-
-    useEffect(() => {
-        const handleBeforeUnload = () => {
-            const draft = { answers: allAnswers, currentIndex };
-            localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
-        };
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, [allAnswers, currentIndex, id]);
-
 
     const handleTopicSubmit = async (data: Answers) => {
         const topic = topics[currentIndex];
@@ -113,7 +85,6 @@ export default function SurveyPage() {
                 toast.success("Survey selesai! Data berhasil dikirim.");
                 await refetch();
                 queryClient.invalidateQueries({ queryKey: ["forms"] }); 
-                localStorage.removeItem(LOCAL_STORAGE_KEY(id));
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");
@@ -124,11 +95,83 @@ export default function SurveyPage() {
         }
     };
 
+    const saveDraftToServer = async (updatedAnswers: typeof allAnswers, currentIndex: number) => {
+        try {
+            const userId = Cookies.get("userId"); 
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            await fetch(`/api/form/draft/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+                body: JSON.stringify({ userId, answers: updatedAnswers, currentIndex }),
+            });
+        } catch (err) {
+            console.error("Failed to save draft to server", err);
+        }
+    };
+
     const handleBack = () => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     };
+
+    useEffect(() => {
+        if (Object.keys(allAnswers).length > 0) {
+            const timeout = setTimeout(() => {
+                saveDraftToServer(allAnswers, currentIndex);
+            }, 1000);
+
+            return () => clearTimeout(timeout);
+        }
+    }, [allAnswers, currentIndex]);
+
+    const getDraftFromServer = async () => {
+        try {
+            const userId = Cookies.get("userId");
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            const response = await fetch(`/api/form/draft/${id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch draft data");
+            }
+
+            const data = await response.json();
+            if (data.draft.answers) {
+                setAllAnswers(data.draft.answers);
+                setCurrentIndex(data.currentIndex || 0);
+            }
+        } catch (err) {
+            console.error("Failed to fetch draft", err);
+        }
+    };
+
+    useEffect(() => {
+        getDraftFromServer();
+    }, [id]);
+
     const topic = topics[currentIndex];
-    const currentAnswers = useMemo(() => allAnswers[topic] || {}, [allAnswers, topic]);
+    const currentAnswers = useMemo(() => {
+        const topic = topics[currentIndex];
+        if (!topic) {
+            return {}; 
+        }
+        return allAnswers[topic] || {};
+    }, [allAnswers, currentIndex, topics]);
 
     if (loading || topics.length === 0) {
         return (
@@ -161,7 +204,7 @@ export default function SurveyPage() {
     ]
     const questions = generateQuestions(threatId, OptionsAnswer);
 
-    if (!isDraftLoaded || loading || topics.length === 0) {
+    if (loading || topics.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <Spinner className="w-12 h-12 text-purple-600 mb-4" />
@@ -232,14 +275,18 @@ export default function SurveyPage() {
                         answers={currentAnswers}  
                         onSubmit={handleTopicSubmit}
                         onAnswerChange={(id, value) => {
-                            setAllAnswers((prev) => ({
-                                ...prev,
-                                [topic]: {
-                                    ...prev[topic],
-                                    [id]: value,
-                                }
-                            }));
+                            setAllAnswers((prev) => {
+                                const updated = {
+                                    ...prev,
+                                    [topic]: {
+                                        ...prev[topic],
+                                        [id]: value,
+                                    }
+                                };
+                                return updated;
+                            });
                         }}
+
                         onBack={handleBack}
                         isFirst={currentIndex === 0}
                         isLast={currentIndex === topics.length - 1}
