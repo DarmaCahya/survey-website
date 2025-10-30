@@ -32,8 +32,9 @@ export async function middleware(req: NextRequest) {
                 return NextResponse.redirect(new URL("/auth/login", req.url));
             }
         } catch (error) {
+            // If verification fetch fails (e.g., due to networking/edge limits), don't block navigation
             console.error("Token verification failed:", error);
-            return NextResponse.redirect(new URL("/auth/login", req.url));
+            return NextResponse.next();
         }
     }
 
