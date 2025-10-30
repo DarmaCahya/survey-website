@@ -1,11 +1,14 @@
 const getApiBaseUrl = () => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    
-    // Remove trailing slashes to avoid double slashes
-    const cleanUrl = baseUrl.replace(/\/$/, '');
-    
-    // If baseUrl is empty or not set, use relative path
-    return cleanUrl || '';
+    const envValue = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim();
+
+    // Default to same-origin Next.js API when not provided
+    if (!envValue) {
+        return '/api/';
+    }
+
+    // Normalize: remove all trailing slashes, then add a single slash
+    const withoutTrailing = envValue.replace(/\/+$/, '');
+    return `${withoutTrailing}/`;
 };
 
 const config = {
