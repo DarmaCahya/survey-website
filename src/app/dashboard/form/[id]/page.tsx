@@ -83,6 +83,7 @@ export default function SurveyPage() {
             try {
                 await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
+                await deleteDraftFromServer(); 
                 await refetch();
                 queryClient.invalidateQueries({ queryKey: ["forms"] }); 
             } catch (err) {
@@ -92,6 +93,32 @@ export default function SurveyPage() {
                 setIsSubmitting(false);
             }
 
+        }
+    };
+
+    const deleteDraftFromServer = async () => {
+        try {
+            const userId = Cookies.get("userId");
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            const response = await fetch(`/api/form/draft/${id}`, {
+                method: "DELETE",  
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete draft");
+            }
+
+            console.log("Draft berhasil dihapus setelah submit.");
+        } catch (err) {
+            console.error("Gagal menghapus draft:", err);
         }
     };
 
