@@ -12,7 +12,7 @@ export const register = async (name: string, email: string, password: string) =>
 export const login = async (email: string, password: string) => {
     return safeRequest(async () => {
         const response = await api.post("auth/login", { email, password });
-        const { token, refreshToken } = response.data.data;
+        const { token, refreshToken, user } = response.data.data;
 
         Cookies.set("accessToken", token, {
             expires: 7,
@@ -22,6 +22,12 @@ export const login = async (email: string, password: string) => {
 
         Cookies.set("refreshToken", refreshToken, {
             expires: 30,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        });
+
+        Cookies.set("userId", String(user.id), {
+            expires: 7,
             secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
         });

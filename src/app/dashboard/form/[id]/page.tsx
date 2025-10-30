@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { generateQuestions } from "@/data/generateQuestions";
 import QuestionForm from "@/components/form/QuestionForm";
@@ -16,28 +16,18 @@ import RiskSummary from "@/components/form/RiskSummary";
 import { useNextStep } from "nextstepjs";
 import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Cookies from "js-cookie";
 
 export default function SurveyPage() {
     const { startNextStep } = useNextStep();
     const queryClient = useQueryClient();
-
-    React.useEffect(() => {
+    
+    useEffect(() => {
         startNextStep("formTour");
     }, [startNextStep]);
 
-    const LOCAL_STORAGE_KEY = (id: string) => `survey-draft-${id}`;
-
     const params = useParams();
     const id = params?.id as string;
-
-    useEffect(() => {
-    const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY(id));
-        if (savedDraft) {
-            const parsedDraft = JSON.parse(savedDraft);
-            setAllAnswers(parsedDraft.answers || {});
-            setCurrentIndex(parsedDraft.currentIndex || 0);
-        }
-    }, [id]);
 
     const [topics, setTopics] = useState<string[]>([]);
     const [description, setDescription] = useState<string[]>([]);
@@ -45,6 +35,7 @@ export default function SurveyPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [allAnswers, setAllAnswers] = useState<{ [topic: string]: Answers }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [draftLoaded, setDraftLoaded] = useState(false);
 
     const { Threats, loading, error, refetch } = useThreatsByFormId(id);
     const completedForm = Threats?.summary.total === Threats?.summary.completed && Threats?.summary.notStarted === 0;
@@ -59,11 +50,6 @@ export default function SurveyPage() {
             setThreatIds(threatIds); 
         }
     }, [loading, Threats]);
-
-    useEffect(() => {
-        const draft = { answers: allAnswers, currentIndex };
-        localStorage.setItem(LOCAL_STORAGE_KEY(id), JSON.stringify(draft));
-    }, [allAnswers, currentIndex, id]);
 
     const handleTopicSubmit = async (data: Answers) => {
         const topic = topics[currentIndex];
@@ -97,9 +83,9 @@ export default function SurveyPage() {
             try {
                 await makeSubmission(payload);
                 toast.success("Survey selesai! Data berhasil dikirim.");
+                await deleteDraftFromServer(); 
                 await refetch();
                 queryClient.invalidateQueries({ queryKey: ["forms"] }); 
-                localStorage.removeItem(LOCAL_STORAGE_KEY(id));
             } catch (err) {
                 console.error(err);
                 toast.error("Gagal mengirim survey.");
@@ -110,9 +96,109 @@ export default function SurveyPage() {
         }
     };
 
+    const deleteDraftFromServer = async () => {
+        try {
+            const userId = Cookies.get("userId");
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            const response = await fetch(`/api/form/draft/${id}`, {
+                method: "DELETE",  
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete draft");
+            }
+
+            console.log("Draft berhasil dihapus setelah submit.");
+        } catch (err) {
+            console.error("Gagal menghapus draft:", err);
+        }
+    };
+
+    const saveDraftToServer = async (updatedAnswers: typeof allAnswers, currentIndex: number) => {
+        try {
+            const userId = Cookies.get("userId"); 
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            await fetch(`/api/form/draft/${id}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+                body: JSON.stringify({ userId, answers: updatedAnswers, currentIndex }),
+            });
+        } catch (err) {
+            console.error("Failed to save draft to server", err);
+        }
+    };
+
     const handleBack = () => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     };
+
+    useEffect(() => {
+        if (Object.keys(allAnswers).length > 0) {
+            const timeout = setTimeout(() => {
+                saveDraftToServer(allAnswers, currentIndex);
+            }, 1000);
+
+            return () => clearTimeout(timeout);
+        }
+    }, [allAnswers, currentIndex]);
+
+    const getDraftFromServer = async () => {
+        try {
+            const userId = Cookies.get("userId");
+            if (!userId) {
+                console.warn("User ID tidak ditemukan di cookies");
+                return;
+            }
+
+            const response = await fetch(`/api/form/draft/${id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-user-id": String(userId),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch draft data");
+            }
+
+            const data = await response.json();
+            if (data.draft.answers) {
+                setAllAnswers(data.draft.answers);
+                setCurrentIndex(data.currentIndex || 0);
+            }
+        } catch (err) {
+            console.error("Failed to fetch draft", err);
+        }
+    };
+
+    useEffect(() => {
+        getDraftFromServer();
+    }, [id]);
+
+    const topic = topics[currentIndex];
+    const currentAnswers = useMemo(() => {
+        const topic = topics[currentIndex];
+        if (!topic) {
+            return {}; 
+        }
+        return allAnswers[topic] || {};
+    }, [allAnswers, currentIndex, topics]);
 
     if (loading || topics.length === 0) {
         return (
@@ -132,18 +218,27 @@ export default function SurveyPage() {
     }
 
     const threatId = threatIds[currentIndex];
-    const topic = topics[currentIndex];
     const ThreatName = Threats?.asset.name;
     const threat = Threats?.threats[currentIndex];
     const businessProcessOptions = threat?.business_processes?.map(bp => bp.name) || [];
 
     const OptionsAnswer = [
-        ThreatName || "Unknown Asset",
-        topic || "Unknown Topic",
-        ...businessProcessOptions
+        `Jenis Data : ${ThreatName || "Unknown Asset"}`,
+        `Jenis Serangan : ${topic || "Unknown Topic"}`,
+        `Proses Bisnis : ${(businessProcessOptions && businessProcessOptions.length > 0) 
+            ? businessProcessOptions.join(", ") 
+            : "Unknown Process"}`
     ]
     const questions = generateQuestions(threatId, OptionsAnswer);
 
+    if (loading || topics.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <Spinner className="w-12 h-12 text-purple-600 mb-4" />
+                <p className="text-gray-500 text-lg animate-pulse">Loading survey...</p>
+            </div>
+        );
+    }
     return (
         <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-2xl p-4 my-10">
             <div className="mb-4 flex items-center justify-between mx-4 py-2">
@@ -204,8 +299,21 @@ export default function SurveyPage() {
                         description={description[currentIndex]}
                         topic={topic}
                         questions={questions}
-                        initialAnswers={allAnswers[topic]}
+                        answers={currentAnswers}  
                         onSubmit={handleTopicSubmit}
+                        onAnswerChange={(id, value) => {
+                            setAllAnswers((prev) => {
+                                const updated = {
+                                    ...prev,
+                                    [topic]: {
+                                        ...prev[topic],
+                                        [id]: value,
+                                    }
+                                };
+                                return updated;
+                            });
+                        }}
+
                         onBack={handleBack}
                         isFirst={currentIndex === 0}
                         isLast={currentIndex === topics.length - 1}
