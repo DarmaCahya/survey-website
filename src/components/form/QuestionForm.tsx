@@ -6,8 +6,6 @@ import { useNextStep } from "nextstepjs";
 import React from "react";
 
 type Props = {
-    topic: string;
-    description: string;
     questions: Question[];
     answers: Answers; 
     onAnswerChange: (id: string, value: string | number) => void; 
@@ -18,8 +16,6 @@ type Props = {
 };
 
 export default function QuestionForm({
-    topic,
-    description,
     questions,
     answers,
     onAnswerChange,
