@@ -78,6 +78,7 @@ model BusinessProcess {
 model ThreatBusinessProcess {
   threatId          Int
   businessProcessId Int
+  explanation       String?
   businessProcess   BusinessProcess @relation(fields: [businessProcessId], references: [id], onDelete: Cascade)
   threat            Threat          @relation(fields: [threatId], references: [id], onDelete: Cascade)
 

@@ -139,7 +139,7 @@ export async function GET(
       // Map business processes attached to this threat (addition only)
       const business_processes = (threat.threatBusinessProcesses || []).map(tb => ({
         name: tb.businessProcess.name,
-        explanation: tb.businessProcess.description ?? null
+        explanation: tb.explanation ?? null
       }));
 
       return {

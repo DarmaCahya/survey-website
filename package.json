@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "db:seed": "node scripts/seed.js",
     "seed:real-data": "node scripts/seed-real-data.js",
+    "backfill:explanations": "node scripts/backfill-threat-explanations.js",
     "docker:start": "./docker.sh start",
     "docker:stop": "./docker.sh stop",
     "docker:restart": "./docker.sh restart",
