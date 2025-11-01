@@ -487,9 +487,13 @@ async function seedRealData() {
             bpNameToId.set(name, id);
           }
           await prisma.threatBusinessProcess.create({ 
-            data: { threatId: threat.id, businessProcessId: id } 
+            data: { 
+              threatId: threat.id, 
+              businessProcessId: id,
+              explanation: bp.explanation ?? null
+            } 
           });
-          console.log(`    🔗 Linked threat "${threat.name}" -> business process: ${name}`);
+          console.log(`    🔗 Linked threat "${threat.name}" -> business process: ${name}${bp.explanation ? ' (with explanation)' : ''}`);
         }
       }
     }

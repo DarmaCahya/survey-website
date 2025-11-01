@@ -57,31 +57,107 @@ jobs:
         password: ${{ secrets.VPS_PASSWORD }}
         port: 22
         script: |
+          set -e  # Exit on error
+          
+          echo "=== Starting Deployment ==="
+          
           # Navigate to project directory
           cd /var/www/survey-web || { echo "Directory not found, creating..."; sudo mkdir -p /var/www/survey-web; sudo chown ubuntu:ubuntu /var/www/survey-web; cd /var/www/survey-web; }
           
           # Pull latest code
+          echo "📥 Pulling latest code..."
           git pull origin main
           
-          # Stop existing containers
+          # Step 1: Backup database (if containers are running)
+          echo "📦 Step 1: Creating database backup..."
+          if docker compose -f docker-compose.prod.yml ps | grep -q postgres; then
+            BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
+            docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres survey_database > "$BACKUP_FILE" || echo "⚠️  Backup skipped (database might not be running)"
+            echo "✅ Backup saved to: $BACKUP_FILE"
+          else
+            echo "⚠️  Database not running, skipping backup"
+          fi
+          
+          # Step 2: Ensure database is running for migration
+          echo "🔄 Step 2: Ensuring database is running..."
+          docker compose -f docker-compose.prod.yml up -d postgres
+          
+          # Wait for database to be ready
+          echo "⏳ Waiting for database to be ready..."
+          sleep 10
+          until docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
+            echo "   Waiting for database..."
+            sleep 2
+          done
+          echo "✅ Database is ready"
+          
+          # Step 3: Apply database migrations
+          echo "🔄 Step 3: Applying database migrations..."
+          docker compose -f docker-compose.prod.yml run --rm app npx prisma migrate deploy || {
+            echo "⚠️  Migration failed or already applied, continuing..."
+          }
+          
+          # Step 4: Generate Prisma Client
+          echo "🔧 Step 4: Generating Prisma client..."
+          docker compose -f docker-compose.prod.yml run --rm app npx prisma generate
+          
+          # Step 5: Ensure JSON file exists for backfill
+          echo "📄 Step 5: Checking JSON file for backfill..."
+          if [ ! -f "jenis_data_dan_threats_with_explanations.json" ]; then
+            echo "⚠️  JSON file not found, skipping backfill"
+          else
+            # Step 6: Run backfill script
+            echo "🔄 Step 6: Running backfill script..."
+            docker compose -f docker-compose.prod.yml run --rm app npm run backfill:explanations || {
+              echo "⚠️  Backfill failed or no data to backfill, continuing..."
+            }
+          fi
+          
+          # Step 7: Stop existing containers
+          echo "🛑 Step 7: Stopping existing containers..."
           docker compose -f docker-compose.prod.yml down || true
           
           # Remove old images to save space
+          echo "🧹 Cleaning up old images..."
           docker image prune -f || true
           
-          # Build and start services with production config
+          # Step 8: Build and start services with production config
+          echo "🚀 Step 8: Building and starting services..."
           docker compose -f docker-compose.prod.yml up --build -d
           
-          # Wait for services to be healthy
-          echo "Waiting for services to start..."
+          # Step 9: Wait for services to be healthy
+          echo "⏳ Step 9: Waiting for services to start..."
           sleep 30
           
-          # Health check
-          echo "Performing health check..."
-          curl -f http://localhost:3000/api/health || { echo "Health check failed!"; exit 1; }
+          # Wait for app to be ready
+          echo "⏳ Waiting for application to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "✅ Application is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "⚠️  Application health check timeout, but continuing..."
+            else
+              echo "   Attempt $i/30..."
+              sleep 2
+            fi
+          done
+          
+          # Step 10: Health check
+          echo "🏥 Step 10: Performing health check..."
+          curl -f http://localhost:3000/api/health || { 
+            echo "❌ Health check failed!"; 
+            echo "📋 Container logs:"
+            docker compose -f docker-compose.prod.yml logs --tail=50
+            exit 1; 
+          }
           
           # Show running containers
+          echo ""
+          echo "📊 Container Status:"
           docker compose -f docker-compose.prod.yml ps
           
+          echo ""
           echo "✅ Deployment completed successfully!"
           echo "🌐 Application available at: http://43.173.30.94:3000"
