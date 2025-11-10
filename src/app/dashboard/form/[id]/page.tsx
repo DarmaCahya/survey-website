@@ -294,7 +294,16 @@ export default function SurveyPage() {
             </div>
             
             {completedForm && Threats?.threats.length > 0 ? (
-                <RiskSummary submissions={Threats.threats.map(t => t.submission)} />
+                <RiskSummary 
+                    submissions={Threats.threats.map(t => t.submission)} 
+                    submissionEligibility={
+                        // Get eligibility from any threat (all threats have same allAssetsCompleted value)
+                        // Prefer one with allAssetsCompleted = true if available
+                        Threats.threats.find(t => t.submissionEligibility?.allAssetsCompleted)?.submissionEligibility ||
+                        Threats.threats.find(t => t.submissionEligibility)?.submissionEligibility ||
+                        undefined
+                    }
+                />
             ) : (
                 <div className="relative" id="form-questions">
                     <QuestionForm
@@ -318,6 +327,7 @@ export default function SurveyPage() {
                         onBack={handleBack}
                         isFirst={currentIndex === 0}
                         isLast={currentIndex === topics.length - 1}
+                        disabled={threat?.submissionEligibility ? !threat.submissionEligibility.canSubmit : false}
                     />
 
                     {isSubmitting && (

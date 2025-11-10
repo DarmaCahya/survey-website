@@ -6,6 +6,16 @@ import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
 import { ThreatDescriptionService } from '@/lib/threat-description-service';
 import { 
+  AssetRepository, 
+  ThreatRepository,
+  SubmissionRepository, 
+  FormProgressRepository,
+  AdminRepository 
+} from '@/lib/repositories';
+import { UMKMSurveyService } from '@/lib/umkm-survey-service';
+import { riskCalculationService } from '@/lib/risk-calculation';
+import { getCurrentQuarter, getCurrentYear } from '@/lib/quarter-utils';
+import { 
   handleApiError, 
   createSuccessResponse,
   createAuthErrorResponse
@@ -15,6 +25,20 @@ import {
 const userRepository = new UserRepository(db);
 const authService = new AuthService(userRepository, passwordService, jwtService);
 const threatDescriptionService = new ThreatDescriptionService();
+const assetRepository = new AssetRepository();
+const threatRepository = new ThreatRepository();
+const submissionRepository = new SubmissionRepository();
+const formProgressRepository = new FormProgressRepository();
+const adminRepository = new AdminRepository();
+
+const umkmSurveyService = new UMKMSurveyService(
+  assetRepository,
+  threatRepository,
+  submissionRepository,
+  formProgressRepository,
+  adminRepository,
+  riskCalculationService
+);
 
 /**
  * Get threats for a specific asset with user submission status
@@ -74,11 +98,16 @@ export async function GET(
       return handleApiError(new Error('Asset not found'), 'Asset not found');
     }
 
-    // Get user's submissions for this asset
+    // Get user's submissions for this asset in current quarter
+    const currentQuarter = getCurrentQuarter();
+    const currentYear = getCurrentYear();
+
     const userSubmissions = await db.submission.findMany({
       where: {
         userId: user.id,
-        assetId: assetId
+        assetId: assetId,
+        quarter: currentQuarter,
+        year: currentYear
       },
       include: {
         threat: {
@@ -92,65 +121,75 @@ export async function GET(
       }
     });
 
-    // Create a map of submissions by threat ID
+    // Create a map of submissions by threat ID (for current quarter)
     const submissionsByThreat = userSubmissions.reduce((acc, submission) => {
       acc[submission.threatId] = submission;
       return acc;
     }, {} as Record<number, typeof userSubmissions[0]>);
 
-    // Build threats with status
-    const threatsWithStatus = asset.threats.map(threat => {
-      const submission = submissionsByThreat[threat.id];
-      
-      let status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
-      let submissionData = null;
-
-      if (!submission) {
-        status = 'NOT_STARTED';
-      } else if (!submission.score) {
-        status = 'IN_PROGRESS';
-      } else {
-        status = 'COMPLETED';
+    // Build threats with status and eligibility
+    const threatsWithStatus = await Promise.all(
+      asset.threats.map(async (threat) => {
+        const submission = submissionsByThreat[threat.id];
         
-        const threatDescription = threatDescriptionService.generateThreatDescription(
-          threat.name,
-          submission.score.category
+        // Get submission eligibility
+        const eligibility = await umkmSurveyService.getSubmissionEligibility(
+          user.id,
+          assetId,
+          threat.id
         );
         
-        submissionData = {
-          submissionId: submission.id,
-          understand: submission.understand,
-          riskInput: submission.riskInput ? {
-            biaya_pengetahuan: submission.riskInput.f,
-            pengaruh_kerugian: submission.riskInput.g,
-            frekuensi_serangan: submission.riskInput.h,
-            pemulihan: submission.riskInput.i
-          } : null,
-          score: {
-            peluang: submission.score.peluang,
-            impact: submission.score.impact,
-            total: submission.score.total,
-            category: submission.score.category
-          },
-          threatDescription
+        let status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+        let submissionData = null;
+
+        if (!submission) {
+          status = 'NOT_STARTED';
+        } else if (!submission.score) {
+          status = 'IN_PROGRESS';
+        } else {
+          status = 'COMPLETED';
+          
+          const threatDescription = threatDescriptionService.generateThreatDescription(
+            threat.name,
+            submission.score.category
+          );
+          
+          submissionData = {
+            submissionId: submission.id,
+            understand: submission.understand,
+            riskInput: submission.riskInput ? {
+              biaya_pengetahuan: submission.riskInput.f,
+              pengaruh_kerugian: submission.riskInput.g,
+              frekuensi_serangan: submission.riskInput.h,
+              pemulihan: submission.riskInput.i
+            } : null,
+            score: {
+              peluang: submission.score.peluang,
+              impact: submission.score.impact,
+              total: submission.score.total,
+              category: submission.score.category
+            },
+            threatDescription
+          };
+        }
+
+        // Map business processes attached to this threat (addition only)
+        const business_processes = (threat.threatBusinessProcesses || []).map(tb => ({
+          name: tb.businessProcess.name,
+          explanation: tb.explanation ?? null
+        }));
+
+        return {
+          id: threat.id,
+          name: threat.name,
+          description: threat.description,
+          business_processes,
+          status,
+          submission: submissionData,
+          submissionEligibility: eligibility
         };
-      }
-
-      // Map business processes attached to this threat (addition only)
-      const business_processes = (threat.threatBusinessProcesses || []).map(tb => ({
-        name: tb.businessProcess.name,
-        explanation: tb.explanation ?? null
-      }));
-
-      return {
-        id: threat.id,
-        name: threat.name,
-        description: threat.description,
-        business_processes,
-        status,
-        submission: submissionData
-      };
-    });
+      })
+    );
 
     const response = {
       asset: {

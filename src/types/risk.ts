@@ -39,6 +39,21 @@ export interface CreateSubmissionRequest {
 
 export interface CreateSubmissionResponse {
   submissionId: number;
+  quarter: number;
+  year: number;
+}
+
+export interface SubmissionEligibility {
+  canSubmit: boolean;
+  currentQuarter: number;
+  currentYear: number;
+  nextSubmissionDate: string | null;
+  allAssetsCompleted: boolean;
+  lastSubmission?: {
+    quarter: number;
+    year: number;
+    submittedAt: string;
+  };
 }
 
 // New batch submission interfaces

@@ -9,6 +9,12 @@ import {
   IRiskCalculationService 
 } from '@/lib/risk-calculation';
 import { InvalidRiskInputError } from '@/lib/custom-errors';
+import {
+  getCurrentQuarter,
+  getCurrentYear,
+  getNextQuarterStartDate,
+  formatDateIndonesian
+} from '@/lib/quarter-utils';
 import { 
   CreateSubmissionRequest, 
   CreateSubmissionResponse,
@@ -22,7 +28,8 @@ import {
   UMKMProgressResponse,
   FormStatus,
   UnderstandLevel,
-  RiskCategory
+  RiskCategory,
+  SubmissionEligibility
 } from '@/types/risk';
 
 /**
@@ -38,6 +45,7 @@ export interface IUMKMSurveyService {
   submitInputs(userId: number, submissionId: number, request: SubmitInputsRequest): Promise<SubmitInputsResponse>;
   getScore(userId: number, submissionId: number): Promise<GetScoreResponse>;
   getUMKMProgress(): Promise<UMKMProgressResponse[]>;
+  getSubmissionEligibility(userId: number, assetId: number, threatId: number): Promise<SubmissionEligibility>;
 }
 
 export class UMKMSurveyService implements IUMKMSurveyService {
@@ -70,8 +78,96 @@ export class UMKMSurveyService implements IUMKMSurveyService {
   }
 
   /**
+   * Get submission eligibility for a user-asset-threat combination
+   * Checks if user can submit in the current quarter
+   * User can submit again only in the next quarter (no same-quarter resubmit)
+   */
+  async getSubmissionEligibility(userId: number, assetId: number, threatId: number): Promise<SubmissionEligibility> {
+    const currentQuarter = getCurrentQuarter();
+    const currentYear = getCurrentYear();
+
+    // Check if submission already exists for this user-asset-threat combination in current quarter
+    const existingSubmission = await this.submissionRepository.findByUserAssetThreatInQuarter(
+      userId,
+      assetId,
+      threatId,
+      currentQuarter,
+      currentYear
+    );
+
+    // Check if all assets are completed in current quarter
+    const allAssets = await this.assetRepository.findAll();
+    const allAssetsCompleted = await this.checkAllAssetsCompleted(userId, currentQuarter, currentYear, allAssets);
+
+    // Always calculate next submission date for information purposes
+    const nextSubmissionDate = getNextQuarterStartDate();
+
+    // If there is an existing submission in the current quarter, user cannot submit again
+    // Show information about next submission window and last submission
+    if (existingSubmission) {
+      return {
+        canSubmit: false,
+        currentQuarter,
+        currentYear,
+        nextSubmissionDate: nextSubmissionDate.toISOString(),
+        allAssetsCompleted,
+        lastSubmission: {
+          quarter: existingSubmission.quarter,
+          year: existingSubmission.year,
+          submittedAt: existingSubmission.submittedAt.toISOString()
+        }
+      };
+    }
+
+    // User can submit if no existing submission in current quarter
+    return {
+      canSubmit: true,
+      currentQuarter,
+      currentYear,
+      nextSubmissionDate: nextSubmissionDate.toISOString(), // Always include next date for information
+      allAssetsCompleted
+    };
+  }
+
+  /**
+   * Check if user has completed all assets in current quarter
+   */
+  private async checkAllAssetsCompleted(
+    userId: number,
+    quarter: number,
+    year: number,
+    allAssets: AssetResponse[]
+  ): Promise<boolean> {
+    if (allAssets.length === 0) return true;
+
+    // Check each asset
+    for (const asset of allAssets) {
+      const assetThreats = await this.assetRepository.findThreatsByAssetId(asset.id);
+      
+      // Check each threat for this asset
+      for (const threat of assetThreats) {
+        const submission = await this.submissionRepository.findByUserAssetThreatInQuarter(
+          userId,
+          asset.id,
+          threat.id,
+          quarter,
+          year
+        );
+        
+        // If no submission or submission has no score, asset is not completed
+        if (!submission || !submission.score) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Create a new submission for a user
-   * Prevents duplicate submissions: 1 user can only submit once per asset-threat combination
+   * Prevents duplicate submissions: 1 user can only submit once per asset-threat combination per quarter
+   * No same-quarter resubmission (prevents overwriting historical data)
    */
   async createSubmission(userId: number, request: CreateSubmissionRequest): Promise<CreateSubmissionResponse> {
     // Validate asset exists
@@ -87,22 +183,33 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       throw new Error('Threat not found for this asset');
     }
 
-    // Check if submission already exists for this user-asset-threat combination
-    const existingSubmission = await this.submissionRepository.findByUserAssetThreat(
+    // Get current quarter and year
+    const currentQuarter = getCurrentQuarter();
+    const currentYear = getCurrentYear();
+
+    // Check if submission already exists for this user-asset-threat combination in current quarter
+    const existingSubmission = await this.submissionRepository.findByUserAssetThreatInQuarter(
       userId, 
       request.assetId, 
-      request.threatId
+      request.threatId,
+      currentQuarter,
+      currentYear
     );
     
+    // Prevent same-quarter resubmission regardless of completion status
     if (existingSubmission) {
-      throw new Error('Submission already exists for this asset-threat combination. Each user can only submit once per asset-threat.');
+      const nextSubmissionDate = getNextQuarterStartDate();
+      const formattedDate = formatDateIndonesian(nextSubmissionDate);
+      throw new Error(`Anda sudah submit di Q${currentQuarter} ${currentYear}. Anda dapat mengisi form kembali mulai ${formattedDate}.`);
     }
 
-    // Create submission
+    // Create new submission with quarter and year
     const submissionId = await this.submissionRepository.create(
       userId, 
       request.assetId, 
-      request.threatId
+      request.threatId,
+      currentQuarter,
+      currentYear
     );
 
     // Update form progress to in_progress
@@ -112,7 +219,11 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       FormStatus.IN_PROGRESS
     );
 
-    return { submissionId };
+    return { 
+      submissionId,
+      quarter: currentQuarter,
+      year: currentYear
+    };
   }
 
   /**
@@ -156,16 +267,26 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       throw new Error(`Invalid threat IDs for asset ${request.assetId}: ${invalidThreatIds.join(', ')}. Valid threat IDs are: ${validThreatIds.join(', ')}`);
     }
 
+    // Get current quarter and year
+    const currentQuarter = getCurrentQuarter();
+    const currentYear = getCurrentYear();
+
+    // Check if all assets are completed
+    const allAssets = await this.assetRepository.findAll();
+    const allAssetsCompleted = await this.checkAllAssetsCompleted(userId, currentQuarter, currentYear, allAssets);
+
     const results = [];
 
     // Process each threat submission
     for (const threatAnswer of request.threats) {
       try {
-        // Check if submission already exists for this user-asset-threat combination
-        const existingSubmission = await this.submissionRepository.findByUserAssetThreat(
+        // Check if submission already exists for this user-asset-threat combination in current quarter
+        const existingSubmission = await this.submissionRepository.findByUserAssetThreatInQuarter(
           userId, 
           request.assetId, 
-          threatAnswer.threatId
+          threatAnswer.threatId,
+          currentQuarter,
+          currentYear
         );
         
         if (existingSubmission) {
@@ -205,44 +326,49 @@ export class UMKMSurveyService implements IUMKMSurveyService {
             });
             continue;
           }
-          
+
+          // Block same-quarter resubmission after completion
+          const nextSubmissionDate = getNextQuarterStartDate();
+          const formattedDate = formatDateIndonesian(nextSubmissionDate);
           results.push({
             threatId: threatAnswer.threatId,
             submissionId: existingSubmission.id,
             success: false,
-            error: 'Submission already completed for this asset-threat combination'
+            error: `Anda sudah submit di Q${currentQuarter} ${currentYear}. Anda dapat mengisi form kembali mulai ${formattedDate}.`
           });
           continue;
         }
 
-        // Create submission
+        // Create submission with quarter and year
         const submissionId = await this.submissionRepository.create(
           userId, 
           request.assetId, 
-          threatAnswer.threatId
+          threatAnswer.threatId,
+          currentQuarter,
+          currentYear
         );
 
-            // Convert answers to SubmitInputsRequest format
-            // Handle field name variations for backward compatibility
-            const inputsRequest: SubmitInputsRequest = {
-              biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
-              pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
-              Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
-              Pemulihan: threatAnswer.Pemulihan,
-              mengerti_poin: threatAnswer.mengerti_poin,
-              // Handle different field name variations
-              Tidak_mengerti_poin: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
-                'Tidak_mengerti_poin',
-                'tidak_mengerti_poin',
-                'tidak_mengerti'
-              ]),
-              // Handle description field name variations
-              description_tidak_mengerti: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
-                'description_tidak_mengerti',
-                'tidak_mengerti_description',
-                'description'
-              ])
-            };
+        // Convert answers to SubmitInputsRequest format
+        // Handle field name variations for backward compatibility
+        const inputsRequest: SubmitInputsRequest = {
+          biaya_pengetahuan: threatAnswer.biaya_pengetahuan,
+          pengaruh_kerugian: threatAnswer.pengaruh_kerugian,
+          Frekuensi_serangan: threatAnswer.Frekuensi_serangan,
+          Pemulihan: threatAnswer.Pemulihan,
+          mengerti_poin: threatAnswer.mengerti_poin,
+          // Handle different field name variations
+          Tidak_mengerti_poin: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+            'Tidak_mengerti_poin',
+            'tidak_mengerti_poin',
+            'tidak_mengerti'
+          ]),
+          // Handle description field name variations
+          description_tidak_mengerti: this.getFeedbackFieldValue(threatAnswer as unknown as Record<string, unknown>, [
+            'description_tidak_mengerti',
+            'tidak_mengerti_description',
+            'description'
+          ])
+        };
 
         // Submit inputs and calculate scores
         const result = await this.submitInputs(userId, submissionId, inputsRequest);
@@ -305,8 +431,18 @@ export class UMKMSurveyService implements IUMKMSurveyService {
       throw new Error('Unauthorized access to submission');
     }
 
-    if (submission.score) {
-      throw new Error('This submission has already been completed with a score. Cannot resubmit.');
+    // Check if all assets are completed - if yes, allow resubmission
+    const allAssets = await this.assetRepository.findAll();
+    const allAssetsCompleted = await this.checkAllAssetsCompleted(
+      userId, 
+      submission.quarter, 
+      submission.year, 
+      allAssets
+    );
+
+    // If submission already has score and not all assets completed, prevent resubmission
+    if (submission.score && !allAssetsCompleted) {
+      throw new Error('This submission has already been completed with a score. Selesaikan semua asset form terlebih dahulu untuk dapat resubmit.');
     }
 
     try {

@@ -48,10 +48,12 @@ export interface IThreatRepository {
  * Submission repository interface
  */
 export interface ISubmissionRepository {
-  create(userId: number, assetId: number, threatId: number): Promise<number>;
+  create(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<number>;
   findById(id: number): Promise<SubmissionWithRelations | null>;
   findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<SubmissionWithRelations | null>;
+  findByUserAssetThreatInQuarter(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<SubmissionWithRelations | null>;
   findByUserAndAsset(userId: number, assetId: number): Promise<SubmissionWithRelations[]>;
+  findByUserAndAssetInQuarter(userId: number, assetId: number, quarter: number, year: number): Promise<SubmissionWithRelations[]>;
   updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void>;
   updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: unknown): Promise<void>;
   updateUnderstand(submissionId: number, understand: UnderstandLevel): Promise<void>;
@@ -150,12 +152,14 @@ export class ThreatRepository implements IThreatRepository {
  * Submission repository implementation
  */
 export class SubmissionRepository implements ISubmissionRepository {
-  async create(userId: number, assetId: number, threatId: number): Promise<number> {
+  async create(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<number> {
     const submission = await db.submission.create({
       data: {
         userId,
         assetId,
         threatId,
+        quarter,
+        year,
         understand: UnderstandLevel.MENGERTI // Default value
       }
     });
@@ -221,6 +225,44 @@ export class SubmissionRepository implements ISubmissionRepository {
             name: true
           }
         }
+      },
+      orderBy: {
+        submittedAt: 'desc'
+      }
+    });
+  }
+
+  async findByUserAssetThreatInQuarter(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<SubmissionWithRelations | null> {
+    return await db.submission.findFirst({
+      where: {
+        userId,
+        assetId,
+        threatId,
+        quarter,
+        year
+      },
+      include: {
+        riskInput: true,
+        score: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        asset: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        threat: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
     });
   }
@@ -230,6 +272,43 @@ export class SubmissionRepository implements ISubmissionRepository {
       where: {
         userId,
         assetId
+      },
+      include: {
+        riskInput: true,
+        score: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        asset: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        threat: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        submittedAt: 'desc'
+      }
+    });
+  }
+
+  async findByUserAndAssetInQuarter(userId: number, assetId: number, quarter: number, year: number): Promise<SubmissionWithRelations[]> {
+    return await db.submission.findMany({
+      where: {
+        userId,
+        assetId,
+        quarter,
+        year
       },
       include: {
         riskInput: true,

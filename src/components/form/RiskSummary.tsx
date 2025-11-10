@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SubmissionDescription } from "@/types/form";
+import { SubmissionDescription, SubmissionEligibility } from "@/types/form";
 import { useNextStep } from "nextstepjs";
 import React from "react";
+import QuarterlySubmissionNotification from "./QuarterlySubmissionNotification";
 
 interface RiskSummaryProps {
   submissions: SubmissionDescription[];
+  submissionEligibility?: SubmissionEligibility;
 }
 
-export default function RiskSummary({ submissions }: RiskSummaryProps) {
+export default function RiskSummary({ submissions, submissionEligibility }: RiskSummaryProps) {
     const { startNextStep } = useNextStep();
 
     React.useEffect(() => {
@@ -37,6 +39,11 @@ export default function RiskSummary({ submissions }: RiskSummaryProps) {
 
     return (
         <div id="result-summary" className="mt-6 mx-auto p-6 space-y-4">
+            {/* Show resubmission notification only if all assets completed */}
+            {submissionEligibility && submissionEligibility.allAssetsCompleted && (
+                <QuarterlySubmissionNotification eligibility={submissionEligibility} />
+            )}
+            
             <h3 className="text-xl font-semibold text-center text-purple-700">
                 💡 Hasil Analisis Risiko
             </h3>

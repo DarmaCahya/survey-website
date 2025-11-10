@@ -52,13 +52,27 @@ export type BusinessProcess = {
     explanation: string;
 };
 
+export type SubmissionEligibility = {
+    canSubmit: boolean;
+    currentQuarter: number;
+    currentYear: number;
+    nextSubmissionDate: string | null;
+    allAssetsCompleted: boolean;
+    lastSubmission?: {
+        quarter: number;
+        year: number;
+        submittedAt: string;
+    };
+};
+
 export type Threat = { 
     id: string; 
     name: string; 
     description?: string; 
     status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
     submission: SubmissionDescription;
-    business_processes?: BusinessProcess[]; 
+    business_processes?: BusinessProcess[];
+    submissionEligibility?: SubmissionEligibility;
 }
 
 export type ThreatResponse = {
