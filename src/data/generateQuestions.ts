@@ -68,7 +68,7 @@ export const generateQuestions = (threatId: string, dynamicOptions: string[]): Q
         placeholder: "",
         type: "radio",
         options: ["Mengerti", "Tidak Mengerti"],
-        required: true,
+        required: false,
     },
     {
         id: `${threatId}_pemahaman_tidak_mengerti`,
