@@ -100,7 +100,7 @@ clean() {
 migrate() {
     print_status "Running database migrations..."
     
-    docker compose exec app npx prisma migrate deploy
+    docker compose exec -w /app app npx prisma migrate deploy --schema=./prisma/schema.prisma
     
     print_success "Migrations completed!"
 }
@@ -109,7 +109,7 @@ migrate() {
 seed() {
     print_status "Seeding database..."
     
-    docker compose exec app npx prisma db seed
+    docker compose exec -w /app app npm run db:seed
     
     print_success "Database seeded successfully!"
 }

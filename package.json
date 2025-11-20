@@ -19,6 +19,9 @@
     "docker:seed": "./docker.sh seed",
     "docker:clean": "./docker.sh clean"
   },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.17.1",
