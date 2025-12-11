@@ -7,4 +7,3 @@ ALTER TABLE "threat_business_processes" ADD COLUMN "explanation" TEXT;
 -- from jenis_data_dan_threats_with_explanations.json
 
 
-

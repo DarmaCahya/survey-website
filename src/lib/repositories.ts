@@ -7,7 +7,8 @@ import {
   UnderstandLevel,
   RiskCategory
 } from '@/types/risk';
-import { Submission, RiskInput, Score } from '@prisma/client';
+import { SubmissionHistoryQuery, SubmissionHistoryResponse, SubmissionHistoryUsersResponse } from '@/types/history';
+import { Submission, RiskInput, Score, Prisma } from '@prisma/client';
 
 // Type for submission with related data
 export type SubmissionWithRelations = Submission & {
@@ -48,12 +49,14 @@ export interface IThreatRepository {
  * Submission repository interface
  */
 export interface ISubmissionRepository {
-  create(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<number>;
+  create(userId: number, assetId: number, threatId: number, month: number, year: number): Promise<number>;
   findById(id: number): Promise<SubmissionWithRelations | null>;
   findByUserAssetThreat(userId: number, assetId: number, threatId: number): Promise<SubmissionWithRelations | null>;
-  findByUserAssetThreatInQuarter(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<SubmissionWithRelations | null>;
+  findByUserAssetThreatInMonth(userId: number, assetId: number, threatId: number, month: number, year: number): Promise<SubmissionWithRelations | null>;
   findByUserAndAsset(userId: number, assetId: number): Promise<SubmissionWithRelations[]>;
-  findByUserAndAssetInQuarter(userId: number, assetId: number, quarter: number, year: number): Promise<SubmissionWithRelations[]>;
+  findByUserAndAssetInMonth(userId: number, assetId: number, month: number, year: number): Promise<SubmissionWithRelations[]>;
+  findHistory(query: SubmissionHistoryQuery): Promise<SubmissionHistoryResponse>;
+  findHistoryUsers(query: SubmissionHistoryQuery): Promise<SubmissionHistoryUsersResponse>;
   updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void>;
   updateScore(submissionId: number, peluang: number, impact: number, total: number, category: RiskCategory, threatDescription?: unknown): Promise<void>;
   updateUnderstand(submissionId: number, understand: UnderstandLevel): Promise<void>;
@@ -152,13 +155,13 @@ export class ThreatRepository implements IThreatRepository {
  * Submission repository implementation
  */
 export class SubmissionRepository implements ISubmissionRepository {
-  async create(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<number> {
+  async create(userId: number, assetId: number, threatId: number, month: number, year: number): Promise<number> {
     const submission = await db.submission.create({
       data: {
         userId,
         assetId,
         threatId,
-        quarter,
+        month,
         year,
         understand: UnderstandLevel.MENGERTI // Default value
       }
@@ -232,13 +235,13 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
-  async findByUserAssetThreatInQuarter(userId: number, assetId: number, threatId: number, quarter: number, year: number): Promise<SubmissionWithRelations | null> {
+  async findByUserAssetThreatInMonth(userId: number, assetId: number, threatId: number, month: number, year: number): Promise<SubmissionWithRelations | null> {
     return await db.submission.findFirst({
       where: {
         userId,
         assetId,
         threatId,
-        quarter,
+        month,
         year
       },
       include: {
@@ -302,12 +305,12 @@ export class SubmissionRepository implements ISubmissionRepository {
     });
   }
 
-  async findByUserAndAssetInQuarter(userId: number, assetId: number, quarter: number, year: number): Promise<SubmissionWithRelations[]> {
+  async findByUserAndAssetInMonth(userId: number, assetId: number, month: number, year: number): Promise<SubmissionWithRelations[]> {
     return await db.submission.findMany({
       where: {
         userId,
         assetId,
-        quarter,
+        month,
         year
       },
       include: {
@@ -337,6 +340,164 @@ export class SubmissionRepository implements ISubmissionRepository {
         submittedAt: 'desc'
       }
     });
+  }
+
+  async findHistory(query: SubmissionHistoryQuery): Promise<SubmissionHistoryResponse> {
+    const page = Math.max(1, query.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, query.pageSize ?? 20));
+    const sort = query.sort === 'asc' ? 'asc' : 'desc';
+    const months = Math.max(1, query.months ?? 12);
+
+    // Hitung batas awal 12 bulan terakhir (awal bulan)
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(1);
+    startDate.setMonth(startDate.getMonth() - (months - 1));
+
+    const where: Prisma.SubmissionWhereInput = {
+      submittedAt: { gte: startDate }
+    };
+
+    if (query.userId) where.userId = query.userId;
+    if (query.userName) {
+      where.user = {
+        name: {
+          contains: query.userName,
+          mode: 'insensitive'
+        }
+      };
+    }
+    if (query.assetId) where.assetId = query.assetId;
+    if (query.threatId) where.threatId = query.threatId;
+
+    const [items, total] = await Promise.all([
+      db.submission.findMany({
+        where,
+        include: {
+          score: true,
+          user: { select: { id: true, email: true, name: true } },
+          asset: { select: { id: true, name: true } },
+          threat: { select: { id: true, name: true } }
+        },
+        orderBy: { submittedAt: sort },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      }),
+      db.submission.count({ where })
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    return {
+      items: items.map(item => ({
+        submissionId: item.id,
+        month: item.month,
+        year: item.year,
+        submittedAt: item.submittedAt.toISOString(),
+        understand: item.understand as UnderstandLevel,
+        user: {
+          id: item.user.id,
+          email: item.user.email,
+          name: item.user.name
+        },
+        asset: {
+          id: item.asset.id,
+          name: item.asset.name
+        },
+        threat: {
+          id: item.threat.id,
+          name: item.threat.name
+        },
+        score: item.score
+          ? {
+              peluang: item.score.peluang,
+              impact: item.score.impact,
+              total: item.score.total,
+              category: item.score.category as RiskCategory | null
+            }
+          : {
+              peluang: null,
+              impact: null,
+              total: null,
+              category: null
+            }
+      })),
+      page,
+      pageSize,
+      total,
+      totalPages
+    };
+  }
+
+  async findHistoryUsers(query: SubmissionHistoryQuery): Promise<SubmissionHistoryUsersResponse> {
+    const page = Math.max(1, query.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, query.pageSize ?? 10));
+    const months = Math.max(1, query.months ?? 12);
+
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(1);
+    startDate.setMonth(startDate.getMonth() - (months - 1));
+
+    const where: Prisma.SubmissionWhereInput = {
+      submittedAt: { gte: startDate }
+    };
+    if (query.userName) {
+      where.user = {
+        name: {
+          contains: query.userName,
+          mode: 'insensitive'
+        }
+      };
+    }
+
+    // Total unique users (groupBy tanpa pagination)
+    const totalGroups = await db.submission.groupBy({
+      by: ['userId'],
+      where,
+    });
+    const total = totalGroups.length;
+
+    const users = await db.submission.groupBy({
+      by: ['userId'],
+      where,
+      _count: { _all: true },
+      _max: { submittedAt: true },
+      orderBy: {
+        _max: { submittedAt: 'desc' }
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    });
+
+    // fetch user details
+    const userIds = users.map(u => u.userId);
+    const userDetails = await db.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, email: true, name: true }
+    });
+    const userMap = new Map(userDetails.map(u => [u.id, u]));
+
+    const items = users.map(u => {
+      const info = userMap.get(u.userId);
+      return {
+        id: u.userId,
+        name: info?.name ?? null,
+        email: info?.email ?? '',
+        submissions: u._count._all,
+        latestSubmittedAt: u._max.submittedAt ? u._max.submittedAt.toISOString() : null
+      };
+    });
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    return {
+      users: items,
+      page,
+      pageSize,
+      total,
+      totalPages
+    };
   }
 
   async updateRiskInput(submissionId: number, f: number, g: number, h: number, i: number): Promise<void> {

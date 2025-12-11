@@ -4,7 +4,7 @@ import { jwtService } from '@/lib/jwt';
 import { AuthService } from '@/lib/auth-service';
 import { UserRepository } from '@/lib/user-repository';
 import { passwordService } from '@/lib/password';
-import { getCurrentQuarter, getCurrentYear } from '@/lib/quarter-utils';
+import { getCurrentMonth, getCurrentYear } from '@/lib/month-utils';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -53,15 +53,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get current quarter and year
-    const currentQuarter = getCurrentQuarter();
+    // Get current month and year
+    const currentMonth = getCurrentMonth();
     const currentYear = getCurrentYear();
 
-    // Get user's submissions for all assets in current quarter
+    // Get user's submissions for all assets in current month
     const userSubmissions = await db.submission.findMany({
       where: {
         userId: user.id,
-        quarter: currentQuarter,
+        month: currentMonth,
         year: currentYear
       },
       include: {

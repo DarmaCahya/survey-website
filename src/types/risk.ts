@@ -39,18 +39,18 @@ export interface CreateSubmissionRequest {
 
 export interface CreateSubmissionResponse {
   submissionId: number;
-  quarter: number;
+  month: number;
   year: number;
 }
 
 export interface SubmissionEligibility {
   canSubmit: boolean;
-  currentQuarter: number;
+  currentMonth: number;
   currentYear: number;
   nextSubmissionDate: string | null;
   allAssetsCompleted: boolean;
   lastSubmission?: {
-    quarter: number;
+    month: number;
     year: number;
     submittedAt: string;
   };

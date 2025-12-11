@@ -103,7 +103,7 @@ model Submission {
   userId      Int
   assetId     Int
   threatId    Int
-  quarter     Int
+  month       Int
   year        Int
   understand  UnderstandLevel
   submittedAt DateTime        @default(now())
@@ -114,8 +114,8 @@ model Submission {
   threat      Threat          @relation(fields: [threatId], references: [id], onDelete: Cascade)
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, assetId, threatId, quarter, year])
-  @@index([userId, assetId, quarter, year])
+  @@unique([userId, assetId, threatId, month, year])
+  @@index([userId, assetId, month, year])
   @@map("submissions")
 }
 

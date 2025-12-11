@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { generateQuestions } from "@/data/generateQuestions";
 import QuestionForm from "@/components/form/QuestionForm";
@@ -121,7 +121,7 @@ export default function SurveyPage() {
         }
     };
 
-    const saveDraftToServer = async (updatedAnswers: typeof allAnswers, currentIndex: number) => {
+    const saveDraftToServer = useCallback(async (updatedAnswers: typeof allAnswers, idx: number) => {
         try {
             const userId = Cookies.get("userId"); 
             if (!userId) {
@@ -135,12 +135,12 @@ export default function SurveyPage() {
                     "Content-Type": "application/json",
                     "x-user-id": String(userId),
                 },
-                body: JSON.stringify({ userId, answers: updatedAnswers, currentIndex }),
+                body: JSON.stringify({ userId, answers: updatedAnswers, currentIndex: idx }),
             });
         } catch (err) {
             console.error("Failed to save draft to server", err);
         }
-    };
+    }, [id]);
 
     const handleBack = () => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
@@ -154,9 +154,9 @@ export default function SurveyPage() {
 
             return () => clearTimeout(timeout);
         }
-    }, [allAnswers, currentIndex]);
+    }, [allAnswers, currentIndex, saveDraftToServer]);
 
-    const getDraftFromServer = async () => {
+    const getDraftFromServer = useCallback(async () => {
         try {
             const userId = Cookies.get("userId");
             if (!userId) {
@@ -188,11 +188,11 @@ export default function SurveyPage() {
         } catch (err) {
             console.error("Failed to fetch draft", err);
         }
-    };
+    }, [id]);
 
     useEffect(() => {
         getDraftFromServer();
-    }, [id]);
+    }, [id, getDraftFromServer]);
 
     const topic = topics[currentIndex];
     const currentAnswers = useMemo(() => {

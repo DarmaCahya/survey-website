@@ -13,6 +13,7 @@ type Props = {
     onBack?: () => void;
     isFirst?: boolean;
     isLast?: boolean;
+    disabled?: boolean;
 };
 
 export default function QuestionForm({
@@ -23,6 +24,7 @@ export default function QuestionForm({
     onBack,
     isFirst = false,
     isLast = false,
+    disabled = false,
 }: Props) {    
     const { startNextStep } = useNextStep();
 
@@ -79,6 +81,7 @@ export default function QuestionForm({
                             question={effectiveQuestion}
                             value={answers[q.id] || ""}
                             onChange={(val) => handleChange(q.id, val)}
+                            disabled={disabled}
                         />
                     );
                 })}
@@ -89,6 +92,7 @@ export default function QuestionForm({
                         type="button"
                         variant="outline"
                         onClick={onBack}
+                        disabled={disabled}
                     >
                         Back
                     </Button>
@@ -98,6 +102,7 @@ export default function QuestionForm({
                     type="submit" 
                     id={isLast ? "submit-button" : ""} 
                     className={`${isLast ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"} px-10`}
+                    disabled={disabled}
                 >
                     {isLast ? "Submit" : "Next"}
                 </Button>

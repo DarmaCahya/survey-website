@@ -6,9 +6,10 @@ type Props = {
     question: Question;
     value: string | number;
     onChange: (value: string | number) => void;
+    disabled?: boolean;
 };
 
-export default function QuestionItem({ question, value, onChange }: Props) {
+export default function QuestionItem({ question, value, onChange, disabled = false }: Props) {
     const { startNextStep } = useNextStep();
     const [showRadio, setShowRadio] = useState(true); 
     const [showToggleButton, setShowToggleButton] = useState(true);
@@ -46,6 +47,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     required={question.required}
+                    disabled={disabled}
                     className="max-w-70 border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 placeholder-gray-400 transition-all duration-200"
                 />
             )}
@@ -67,6 +69,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                                 value={num}
                                 checked={value === String(num)}
                                 onChange={(e) => onChange(e.target.value)}
+                                disabled={disabled}
                                 required={question.required}
                                 className="appearance-none h-5 w-5 rounded-full border-2 border-purple-500 checked:bg-purple-500 checked:border-purple-500 transition-all cursor-pointer"
                             />
@@ -83,6 +86,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowRadio(!showRadio)}
+                            disabled={disabled}
                             className="absolute top-3 right-3 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300"
                         >
                             {showRadio ? "Tutup Pertanyaan" : "Lihat Pertanyaan"}
@@ -114,6 +118,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                                             }
                                         }}
                                         className="form-radio text-purple-600 focus:ring-purple-500"
+                                        disabled={disabled}
                                         required={question.required}
                                     />
                                     {opt}
@@ -130,6 +135,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                     onChange={(e) => onChange(e.target.value)}
                     className="max-w-xl border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 bg-white transition-all duration-200"
                     required={question.required}
+                    disabled={disabled}
                 >
                     <option value="">Pilih</option>
                     {question.options.map((opt) => (
@@ -147,6 +153,7 @@ export default function QuestionItem({ question, value, onChange }: Props) {
                     placeholder={question.placeholder}
                     rows={1}
                     required={question.required}
+                    disabled={disabled}
                     className="max-w-2xl border-b-2 border-gray-300 focus:border-purple-500 outline-none p-2 w-full text-gray-800 placeholder-gray-400 transition-all duration-200"
                 />
             )}

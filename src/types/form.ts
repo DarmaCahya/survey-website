@@ -54,12 +54,12 @@ export type BusinessProcess = {
 
 export type SubmissionEligibility = {
     canSubmit: boolean;
-    currentQuarter: number;
+    currentMonth: number;
     currentYear: number;
     nextSubmissionDate: string | null;
     allAssetsCompleted: boolean;
     lastSubmission?: {
-        quarter: number;
+        month: number;
         year: number;
         submittedAt: string;
     };

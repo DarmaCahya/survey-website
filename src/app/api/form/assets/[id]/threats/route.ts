@@ -14,7 +14,7 @@ import {
 } from '@/lib/repositories';
 import { UMKMSurveyService } from '@/lib/umkm-survey-service';
 import { riskCalculationService } from '@/lib/risk-calculation';
-import { getCurrentQuarter, getCurrentYear } from '@/lib/quarter-utils';
+import { getCurrentMonth, getCurrentYear } from '@/lib/month-utils';
 import { 
   handleApiError, 
   createSuccessResponse,
@@ -98,15 +98,15 @@ export async function GET(
       return handleApiError(new Error('Asset not found'), 'Asset not found');
     }
 
-    // Get user's submissions for this asset in current quarter
-    const currentQuarter = getCurrentQuarter();
+    // Get user's submissions for this asset in current month
+    const currentMonth = getCurrentMonth();
     const currentYear = getCurrentYear();
 
     const userSubmissions = await db.submission.findMany({
       where: {
         userId: user.id,
         assetId: assetId,
-        quarter: currentQuarter,
+        month: currentMonth,
         year: currentYear
       },
       include: {
@@ -121,7 +121,7 @@ export async function GET(
       }
     });
 
-    // Create a map of submissions by threat ID (for current quarter)
+    // Create a map of submissions by threat ID (for current month)
     const submissionsByThreat = userSubmissions.reduce((acc, submission) => {
       acc[submission.threatId] = submission;
       return acc;

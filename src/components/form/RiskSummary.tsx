@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SubmissionDescription, SubmissionEligibility } from "@/types/form";
 import { useNextStep } from "nextstepjs";
 import React from "react";
-import QuarterlySubmissionNotification from "./QuarterlySubmissionNotification";
+import MonthlySubmissionNotification from "./MonthlySubmissionNotification";
 
 interface RiskSummaryProps {
   submissions: SubmissionDescription[];
@@ -41,7 +41,7 @@ export default function RiskSummary({ submissions, submissionEligibility }: Risk
         <div id="result-summary" className="mt-6 mx-auto p-6 space-y-4">
             {/* Show resubmission notification only if all assets completed */}
             {submissionEligibility && submissionEligibility.allAssetsCompleted && (
-                <QuarterlySubmissionNotification eligibility={submissionEligibility} />
+                <MonthlySubmissionNotification eligibility={submissionEligibility} />
             )}
             
             <h3 className="text-xl font-semibold text-center text-purple-700">
