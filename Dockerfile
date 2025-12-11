@@ -38,7 +38,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Note: Prisma schema is only needed for migrations (not at runtime)
+# Copy Prisma schema and migrations for runtime migrations
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 # Switch to non-root user
 USER nextjs
