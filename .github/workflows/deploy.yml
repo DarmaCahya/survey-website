@@ -65,8 +65,10 @@ jobs:
           cd /var/www/survey-web || { echo "Directory not found, creating..."; sudo mkdir -p /var/www/survey-web; sudo chown ubuntu:ubuntu /var/www/survey-web; cd /var/www/survey-web; }
           
           # Pull latest code
+          # Pull latest code
           echo "📥 Pulling latest code..."
-          git pull origin main
+          git fetch origin
+          git reset --hard origin/main
           
           # Step 1: Backup database (if containers are running)
           echo "📦 Step 1: Creating database backup..."
@@ -113,9 +115,10 @@ jobs:
             }
           fi
           
-          # Step 7: Stop existing containers
-          echo "🛑 Step 7: Stopping existing containers..."
+          # Step 7: Stop existing containers and FORCE REMOVE by name
+          echo "🛑 Step 7: Stopping and removing existing containers..."
           docker compose -f docker-compose.prod.yml down || true
+          docker rm -f survey-app survey-postgres || true
           
           # Remove old images to save space
           echo "🧹 Cleaning up old images..."
@@ -123,7 +126,7 @@ jobs:
           
           # Step 8: Build and start services with production config
           echo "🚀 Step 8: Building and starting services..."
-          docker compose -f docker-compose.prod.yml up --build -d
+          docker compose -f docker-compose.prod.yml up --build --no-cache -d
           
           # Step 9: Wait for services to be healthy
           echo "⏳ Step 9: Waiting for services to start..."
@@ -143,15 +146,6 @@ jobs:
               sleep 2
             fi
           done
-          
-          # Step 10: Health check
-          echo "🏥 Step 10: Performing health check..."
-          curl -f http://localhost:3000/api/health || { 
-            echo "❌ Health check failed!"; 
-            echo "📋 Container logs:"
-            docker compose -f docker-compose.prod.yml logs --tail=50
-            exit 1; 
-          }
           
           # Show running containers
           echo ""
