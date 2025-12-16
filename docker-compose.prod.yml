@@ -7,7 +7,6 @@ services:
     environment:
       POSTGRES_DB: survey_database
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
     ports:
       - "5434:5432"
     volumes:
@@ -29,10 +28,6 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:postgres123@postgres:5432/survey_database?sslmode=disable
-      JWT_SECRET: 8bee05d9f05b1d367ed47f9da766521c
-      ADMIN_PIN: akanselesai2025
-      NEXT_TELEMETRY_DISABLED: 1
     ports:
       - "3000:3000"
     depends_on:

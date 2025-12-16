@@ -14,6 +14,8 @@ RUN npm ci --ignore-scripts && \
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Copy docker.env to .env.production for NEXT_PUBLIC_ variables during build
+COPY docker.env .env.production
 RUN npx prisma generate && \
     npm run build && \
     npm prune --production
