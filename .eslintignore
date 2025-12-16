@@ -1,6 +1,8 @@
-# GitHub Actions Workflow Files
-# These files are YAML configuration files for CI/CD
-
-# Ignore YAML linting for workflow files
+node_modules
+.next
+out
+build
+next-env.d.ts
+scripts/**/*.js
 .github/workflows/*.yml
 .github/workflows/*.yaml
